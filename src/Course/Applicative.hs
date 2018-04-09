@@ -216,8 +216,7 @@ lift1 f a = f <$> a
 --
 -- prop> \x y -> Full x *> Full y == Full y
 (*>) :: Applicative f => f a -> f b -> f b
-(*>) f g = 
-  error "todo: Course.Applicative#(*>)"
+(*>) = lift2 seq
 
 -- | Apply, discarding the value of the second argument.
 -- Pronounced, left apply.
@@ -237,13 +236,8 @@ lift1 f a = f <$> a
 -- prop> \x y z a b c -> (x :. y :. z :. Nil) <* (a :. b :. c :. Nil) == (x :. x :. x :. y :. y :. y :. z :. z :. z :. Nil)
 --
 -- prop> \x y -> Full x <* Full y == Full x
-(<*) ::
-  Applicative f =>
-  f b
-  -> f a
-  -> f b
-(<*) =
-  error "todo: Course.Applicative#(<*)"
+(<*) :: Applicative f => f a -> f b -> f a
+(<*) = lift2 const
 
 -- | Sequences a list of structures to a structure of list.
 --
@@ -261,10 +255,7 @@ lift1 f a = f <$> a
 --
 -- >>> sequence ((*10) :. (+2) :. Nil) 6
 -- [60,8]
-sequence ::
-  Applicative f =>
-  List (f a)
-  -> f (List a)
+sequence :: Applicative f => List (f a) -> f (List a)
 sequence =
   error "todo: Course.Applicative#sequence"
 
