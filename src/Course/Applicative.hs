@@ -256,8 +256,7 @@ lift1 f a = f <$> a
 -- >>> sequence ((*10) :. (+2) :. Nil) 6
 -- [60,8]
 sequence :: Applicative f => List (f a) -> f (List a)
-sequence =
-  error "todo: Course.Applicative#sequence"
+sequence = foldRight (lift2 (:.)) (pure Nil)
 
 -- | Replicate an effect a given number of times.
 --
@@ -275,13 +274,8 @@ sequence =
 --
 -- >>> replicateA 3 ('a' :. 'b' :. 'c' :. Nil)
 -- ["aaa","aab","aac","aba","abb","abc","aca","acb","acc","baa","bab","bac","bba","bbb","bbc","bca","bcb","bcc","caa","cab","cac","cba","cbb","cbc","cca","ccb","ccc"]
-replicateA ::
-  Applicative f =>
-  Int
-  -> f a
-  -> f (List a)
-replicateA =
-  error "todo: Course.Applicative#replicateA"
+replicateA :: Applicative f => Int -> f a -> f (List a)
+replicateA i f = sequence $ f <$ take i infinity 
 
 -- | Filter a list with a predicate that produces an effect.
 --
@@ -303,13 +297,8 @@ replicateA =
 -- >>> filtering (const $ True :. True :.  Nil) (1 :. 2 :. 3 :. Nil)
 -- [[1,2,3],[1,2,3],[1,2,3],[1,2,3],[1,2,3],[1,2,3],[1,2,3],[1,2,3]]
 --
-filtering ::
-  Applicative f =>
-  (a -> f Bool)
-  -> List a
-  -> f (List a)
-filtering =
-  error "todo: Course.Applicative#filtering"
+filtering :: Applicative f => (a -> f Bool) -> List a -> f (List a)
+filtering p = foldRight(\h -> lift2(\c -> if c then (h:.) else id) (p h)) (pure Nil)
 
 -----------------------
 -- SUPPORT LIBRARIES --
