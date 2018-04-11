@@ -127,7 +127,6 @@ infixl 1 >>=
 -- [2,2,3,3]
 (<=<) :: Monad f => (b -> f c) -> (a -> f b) -> a -> f c
 (<=<) g h x = g =<< (h =<< pure x)
-  -- error "todo: Course.Monad#(<=<)"
 
 infixr 1 <=<
 
