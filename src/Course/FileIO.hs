@@ -86,11 +86,10 @@ printFile path content = do
   putStrLn $ "============ " ++ path
   putStrLn content
 
-
 -- Given a list of (file name and file contents), print each.
 -- Use @printFile@.
 printFiles :: List (FilePath, Chars) -> IO ()
-printFiles = void . sequence . map (uncurry printFile)
+printFiles = void . mapM (uncurry printFile)
 
 
 -- Given a file name, return (file name and file contents).
@@ -102,7 +101,7 @@ getFile p = (,) p <$> readFile p
 -- Given a list of file names, return list of (file name and file contents).
 -- Use @getFile@.
 getFiles :: List FilePath -> IO (List (FilePath, Chars))
-getFiles = sequence . map getFile
+getFiles = mapM getFile
 
 -- Given a file name, read it and for each line in that file, read and print contents of each.
 -- Use @getFiles@ and @printFiles@.
@@ -124,3 +123,6 @@ main = do
 -- ? `sequence . (<$>)`
 -- ? `void . sequence . (<$>)`
 -- Factor it out.
+
+mapM :: Applicative g => (a -> g b) -> List a -> g (List b)
+mapM l = sequence . (<$>) l
