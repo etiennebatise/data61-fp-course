@@ -82,14 +82,16 @@ the contents of c
 -- Given the file name, and file contents, print them.
 -- Use @putStrLn@.
 printFile :: FilePath -> Chars -> IO ()
-printFile =
-  error "todo: Course.FileIO#printFile"
+printFile path content = do
+  putStrLn $ "============ " ++ path
+  putStrLn content
+
 
 -- Given a list of (file name and file contents), print each.
 -- Use @printFile@.
 printFiles :: List (FilePath, Chars) -> IO ()
-printFiles =
-  error "todo: Course.FileIO#printFiles"
+printFiles = void . sequence . map (uncurry printFile)
+
 
 -- Given a file name, return (file name and file contents).
 -- Use @readFile@.
