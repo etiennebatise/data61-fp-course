@@ -25,6 +25,7 @@ import qualified Data.Set as S
 
 -- A `State` is a function from a state value `s` to (a produced value `a`, and a resulting state `s`).
 newtype State s a = State {runState :: s -> (a, s)}
+-- newtype State s a = State (s -> (a, s))
 
 -- | Run the `State` seeded with `s` and retrieve the resulting state.
 --
@@ -58,8 +59,7 @@ put x = State (const ((), x))
 -- (10,6)
 instance Functor (State s) where
   (<$>) :: (a -> b) -> State s a -> State s b
-  (<$>) =
-    error "todo: Course.State#(<$>)"
+  (<$>) f (State g) = State(\x -> let (a, s') = g x in (f a, s'))
 
 -- | Implement the `Applicative` instance for `State s`.
 --
