@@ -114,11 +114,11 @@ instance Monad (State s) where
 -- (Empty,8)
 findM :: Monad f => (a -> f Bool) -> List a -> f (Optional a)
 findM _ Nil = pure Empty
-findM f (a:.b) = match =<< f a
+findM g (a:.b) = match =<< g a
   where
     match True  = pure (Full a)
-    match False = findM f b
-    
+    match False = findM g b
+
 
 -- | Find the first element in a `List` that repeats.
 -- It is possible that no element repeats, hence an `Optional` result.
@@ -127,12 +127,10 @@ findM f (a:.b) = match =<< f a
 --
 -- prop> \xs -> case firstRepeat xs of Empty -> let xs' = hlist xs in nub xs' == xs'; Full x -> length (filter (== x) xs) > 1
 -- prop> \xs -> case firstRepeat xs of Empty -> True; Full x -> let (l, (rx :. rs)) = span (/= x) xs in let (l2, r2) = span (/= x) rs in let l3 = hlist (l ++ (rx :. Nil) ++ l2) in nub l3 == l3
-firstRepeat ::
-  Ord a =>
-  List a
-  -> Optional a
-firstRepeat =
-  error "todo: Course.State#firstRepeat"
+firstRepeat :: Ord a => List a -> Optional a
+firstRepeat l = eval (findM g l) S.empty
+  where
+    g x = State (\s -> (S.member x s, S.insert x s))
 
 -- | Remove all duplicate elements in a `List`.
 -- /Tip:/ Use `filtering` and `State` with a @Data.Set#Set@.
