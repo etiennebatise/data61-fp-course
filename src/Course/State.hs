@@ -134,16 +134,16 @@ firstRepeat l = eval (findM g l) S.empty
 
 -- | Remove all duplicate elements in a `List`.
 -- /Tip:/ Use `filtering` and `State` with a @Data.Set#Set@.
+-- filtering :: Applicative f => (a -> f Bool) -> List a -> f (List a)
 --
 -- prop> \xs -> firstRepeat (distinct xs) == Empty
 --
 -- prop> \xs -> distinct xs == distinct (flatMap (\x -> x :. x :. Nil) xs)
-distinct ::
-  Ord a =>
-  List a
-  -> List a
-distinct =
-  error "todo: Course.State#distinct"
+distinct :: Ord a => List a -> List a
+-- distinct = error "todo: Course.State#distinct"
+distinct l = eval (filtering g l) Nil
+  where
+    g x = State(\s -> (not (elem x s), x:.s))
 
 -- | A happy number is a positive integer, where the sum of the square of its digits eventually reaches 1 after repetition.
 -- In contrast, a sad number (not a happy number) is where the sum of the square of its digits never reaches 1
