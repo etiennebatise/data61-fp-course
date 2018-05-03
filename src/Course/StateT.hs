@@ -72,29 +72,21 @@ instance Monad f => Monad (StateT s f) where
   f =<< (StateT a) = StateT(\s -> (\(b, s') -> runStateT (f b) s') =<< a s)
 
 -- | A `State'` is `StateT` specialised to the `ExactlyOne` functor.
-type State' s a =
-  StateT s ExactlyOne a
+type State' s a = StateT s ExactlyOne a
 
 -- | Provide a constructor for `State'` values
 --
 -- >>> runStateT (state' $ runState $ put 1) 0
 -- ExactlyOne  ((),1)
-state' ::
-  (s -> (a, s))
-  -> State' s a
-state' =
-  error "todo: Course.StateT#state'"
+state' :: (s -> (a, s)) -> State' s a
+state' f = StateT(\s -> ExactlyOne (f s))
 
 -- | Provide an unwrapper for `State'` values.
 --
 -- >>> runState' (state' $ runState $ put 1) 0
 -- ((),1)
-runState' ::
-  State' s a
-  -> s
-  -> (a, s)
-runState' =
-  error "todo: Course.StateT#runState'"
+runState' :: State' s a -> s -> (a, s)
+runState' = error "todo: Course.StateT#runState'"
 
 -- | Run the `StateT` seeded with `s` and retrieve the resulting state.
 execT ::
