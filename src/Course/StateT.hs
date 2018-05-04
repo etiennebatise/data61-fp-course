@@ -79,58 +79,38 @@ type State' s a = StateT s ExactlyOne a
 -- >>> runStateT (state' $ runState $ put 1) 0
 -- ExactlyOne  ((),1)
 state' :: (s -> (a, s)) -> State' s a
-state' f = StateT(\s -> ExactlyOne (f s))
+state' f = StateT(ExactlyOne . f)
 
 -- | Provide an unwrapper for `State'` values.
 --
 -- >>> runState' (state' $ runState $ put 1) 0
 -- ((),1)
 runState' :: State' s a -> s -> (a, s)
-runState' = error "todo: Course.StateT#runState'"
+runState' k = runExactlyOne . runStateT k
 
 -- | Run the `StateT` seeded with `s` and retrieve the resulting state.
-execT ::
-  Functor f =>
-  StateT s f a
-  -> s
-  -> f s
-execT =
-  error "todo: Course.StateT#execT"
+execT :: Functor f => StateT s f a -> s -> f s
+execT a s = snd <$> runStateT a s
 
 -- | Run the `State` seeded with `s` and retrieve the resulting state.
-exec' ::
-  State' s a
-  -> s
-  -> s
-exec' =
-  error "todo: Course.StateT#exec'"
+exec' :: State' s a -> s -> s
+exec' a s = snd $ runState' a s
 
 -- | Run the `StateT` seeded with `s` and retrieve the resulting value.
-evalT ::
-  Functor f =>
-  StateT s f a
-  -> s
-  -> f a
-evalT =
-  error "todo: Course.StateT#evalT"
+evalT :: Functor f => StateT s f a -> s -> f a
+-- evalT = error "todo: Course.StateT#evalT"
+evalT a s = fst <$> runStateT a s
 
 -- | Run the `State` seeded with `s` and retrieve the resulting value.
-eval' ::
-  State' s a
-  -> s
-  -> a
-eval' =
-  error "todo: Course.StateT#eval'"
+eval' :: State' s a -> s -> a
+eval' a s = fst $ runState' a s
 
 -- | A `StateT` where the state also distributes into the produced value.
 --
 -- >>> (runStateT (getT :: StateT Int List Int) 3)
 -- [(3,3)]
-getT ::
-  Applicative f =>
-  StateT s f s
-getT =
-  error "todo: Course.StateT#getT"
+getT :: Applicative f => StateT s f s
+getT = StateT(\s -> pure (s, s))
 
 -- | A `StateT` where the resulting state is seeded with the given value.
 --
@@ -139,24 +119,19 @@ getT =
 --
 -- >>> runStateT (putT 2 :: StateT Int List ()) 0
 -- [((),2)]
-putT ::
-  Applicative f =>
-  s
-  -> StateT s f ()
-putT =
-  error "todo: Course.StateT#putT"
+putT :: Applicative f => s -> StateT s f ()
+-- putT = error "todo: Course.StateT#putT"
+putT s = StateT(\_ -> pure((), s))
 
 -- | Remove all duplicate elements in a `List`.
 --
 -- /Tip:/ Use `filtering` and `State'` with a @Data.Set#Set@.
 --
+-- filtering :: Applicative f => (a -> f Bool) -> List a -> f (List a)
+--
 -- prop> \xs -> distinct' xs == distinct' (flatMap (\x -> x :. x :. Nil) xs)
-distinct' ::
-  (Ord a, Num a) =>
-  List a
-  -> List a
-distinct' =
-  error "todo: Course.StateT#distinct'"
+distinct' :: (Ord a, Num a) => List a -> List a
+distinct' = error "todo: Course.StateT#distinct'"
 
 -- | Remove all duplicate elements in a `List`.
 -- However, if you see a value greater than `100` in the list,
