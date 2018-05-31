@@ -240,8 +240,8 @@ After this, the following progression of modules is recommended:
 * [x] `Course.Monad`
 * [x] `Course.FileIO`
 * [x] `Course.State`
-* [-] `Course.StateT`
-* [ ] `Course.Extend`
+* [x] `Course.StateT`
+* [x] `Course.Extend`
 * [ ] `Course.Comonad`
 * [ ] `Course.Compose`
 * [ ] `Course.Traversable`
