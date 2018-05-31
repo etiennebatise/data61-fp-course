@@ -24,7 +24,6 @@ class Extend f => Comonad f where copure :: f a -> a
 -- 7
 instance Comonad ExactlyOne where
   copure :: ExactlyOne a -> a
-  -- copure = error "todo: Course.Comonad copure#instance ExactlyOne"
   copure (ExactlyOne a) = a
 
 -- | Witness that all things with (<<=) and copure also have (<$>).
@@ -32,7 +31,6 @@ instance Comonad ExactlyOne where
 -- >>> (+10) <$$> ExactlyOne 7
 -- ExactlyOne 17
 (<$$>) :: Comonad f => (a -> b) -> f a -> f b
--- (<$$>) = error "todo: Course.Comonad#(<$>)"
-(<$$>) g x = (g . copure) <<= x
+(<$$>) g = (g . copure <<=)
 
 
