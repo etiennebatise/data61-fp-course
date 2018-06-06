@@ -244,7 +244,7 @@ After this, the following progression of modules is recommended:
 * [x] `Course.Extend`
 * [x] `Course.Comonad`
 * [x] `Course.Compose`
-* [ ] `Course.Traversable`
+* [x] `Course.Traversable`
 * [ ] `Course.ListZipper`
 * [ ] `Course.Parser` *(see also `Course.Person` for the parsing rules)*
 * [ ] `Course.MoreParser`
