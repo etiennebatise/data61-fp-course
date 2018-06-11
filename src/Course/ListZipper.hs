@@ -162,7 +162,7 @@ setFocus a = withFocus (const a)
 -- >>> hasLeft (zipper [] 0 [1,2])
 -- False
 hasLeft :: ListZipper a -> Bool
-hasLeft = isEmpty . lefts 
+hasLeft = isEmpty . lefts
 
 -- | Returns whether there are values to the right of focus.
 --
@@ -199,8 +199,11 @@ hasRight = isEmpty . rights
 -- break :: (a -> Bool) -> List a -> (List a, List a)
 
 findLeft :: (a -> Bool) -> ListZipper a -> MaybeListZipper a
-findLeft p lz = let l = toList lz
-                    (m, n) = break p l in _
+findLeft p (ListZipper l h r) = let (t, d) = break p l
+                                    r' = reverse t ++  (h:.r)
+                                in case d of
+                                     Nil -> IsNotZ
+                                     (h':.t') -> IsZ(ListZipper t' h' r')
 
 -- | Seek to the right for a location matching a predicate, starting from the
 -- current one.
@@ -220,12 +223,9 @@ findLeft p lz = let l = toList lz
 --
 -- >>> findRight (== 1) (zipper [2, 3] 1 [1, 4, 5, 1])
 -- [1,2,3] >1< [4,5,1]
-findRight ::
-  (a -> Bool)
-  -> ListZipper a
-  -> MaybeListZipper a
-findRight =
-  error "todo: Course.ListZipper#findRight"
+findRight :: (a -> Bool) -> ListZipper a -> MaybeListZipper a
+findRight p (ListZipper l h r) = findLeft p (ListZipper r h l)
+
 
 -- | Move the zipper left, or if there are no elements to the left, go to the far right.
 --
