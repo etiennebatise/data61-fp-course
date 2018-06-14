@@ -41,7 +41,7 @@ instance Extend ExactlyOne where
 -- [[[4,5,6],[1,2,3]],[[4,5,6]]]
 instance Extend List where
   (<<=) :: (List a -> b) -> List a -> List b
-  (<<=) _ Nil = Nil 
+  (<<=) _ Nil = Nil
   (<<=) f l@(_:.xs) = f l :. (f <<= xs)
 
 -- | Implement the @Extend@ instance for @Optional@.

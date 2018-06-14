@@ -547,13 +547,14 @@ instance Applicative MaybeListZipper where
 -- This implementation "visits" every possible zipper value derivable from a given zipper (i.e. all zippers to the left and right).
 --
 -- /Tip:/ Use @List#unfoldr@.
+-- unfoldr :: (a -> Optional (b, a)) -> a -> List b
 --
 -- >>> id <<= (zipper [2,1] 3 [4,5])
 -- [[1] >2< [3,4,5],[] >1< [2,3,4,5]] >[2,1] >3< [4,5]< [[3,2,1] >4< [5],[4,3,2,1] >5< []]
 instance Extend ListZipper where
   -- (<<=) :: (f a -> b) -> f a -> f b
   (<<=) = error "todo: Course.ListZipper (<<=)#instance ListZipper"
-  -- (<<=) g z@(ListZipper l h r) = let x = g z in pure x
+  -- (<<=) g z@(ListZipper l h r) = ListZipper (unfoldr (_) z) _ _
 
 -- | Implement the `Extend` instance for `MaybeListZipper`.
 -- This instance will use the `Extend` instance for `ListZipper`.
