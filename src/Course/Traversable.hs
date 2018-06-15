@@ -28,7 +28,8 @@ class Functor t => Traversable t where
 
 instance Traversable List where
   traverse :: Applicative f => (a -> f b) -> List a -> f (List b)
-  traverse = error "todo: Course.Traversable traverse#instance List"
+  traverse _ Nil = pure Nil
+  traverse g l = foldRight(lift2 (:.) . g) (pure Nil) l
 
 instance Traversable ExactlyOne where
   traverse :: Applicative f => (a -> f b) -> ExactlyOne a -> f (ExactlyOne b)
