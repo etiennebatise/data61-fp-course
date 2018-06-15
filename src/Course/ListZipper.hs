@@ -553,8 +553,9 @@ instance Applicative MaybeListZipper where
 -- [[1] >2< [3,4,5],[] >1< [2,3,4,5]] >[2,1] >3< [4,5]< [[3,2,1] >4< [5],[4,3,2,1] >5< []]
 instance Extend ListZipper where
   -- (<<=) :: (f a -> b) -> f a -> f b
-  (<<=) = error "todo: Course.ListZipper (<<=)#instance ListZipper"
-  -- (<<=) g z@(ListZipper l h r) = ListZipper (unfoldr (_) z) _ _
+  (<<=) g z = let h = (<$>) (\z' -> (g z', z')) . toOptional
+                  unfold x = unfoldr (h . x)
+              in ListZipper (unfold moveLeft z) (g z) (unfold moveRight z)
 
 -- | Implement the `Extend` instance for `MaybeListZipper`.
 -- This instance will use the `Extend` instance for `ListZipper`.
@@ -566,7 +567,8 @@ instance Extend ListZipper where
 -- >>> id <<= (IsZ (zipper [2,1] 3 [4,5]))
 -- [[1] >2< [3,4,5],[] >1< [2,3,4,5]] >[2,1] >3< [4,5]< [[3,2,1] >4< [5],[4,3,2,1] >5< []]
 instance Extend MaybeListZipper where
-  (<<=) = error "todo: Course.ListZipper (<<=)#instance MaybeListZipper"
+  (<<=) _ IsNotZ = IsNotZ
+  (<<=) g (IsZ z) = IsZ (g . IsZ <<= z)
 
 -- | Implement the `Comonad` instance for `ListZipper`.
 -- This implementation returns the current focus of the zipper.
@@ -574,7 +576,7 @@ instance Extend MaybeListZipper where
 -- >>> copure (zipper [2,1] 3 [4,5])
 -- 3
 instance Comonad ListZipper where
-  copure = error "todo: Course.ListZipper copure#instance ListZipper"
+  copure (ListZipper _ a _) = a
 
 -- | Implement the `Traversable` instance for `ListZipper`.
 -- This implementation traverses a zipper while running some `Applicative` effect through the zipper.
@@ -586,7 +588,10 @@ instance Comonad ListZipper where
 -- >>> traverse id (zipper [Full 1, Full 2, Full 3] (Full 4) [Empty, Full 6, Full 7])
 -- Empty
 instance Traversable ListZipper where
-  traverse = error "todo: Course.ListZipper traverse#instance ListZipper"
+  traverse g (ListZipper l h r) = let w = traverse g l
+                                      x = g h
+                                      y = traverse g r
+                                    in lift3 ListZipper w x y
 
 -- | Implement the `Traversable` instance for `MaybeListZipper`.
 --
