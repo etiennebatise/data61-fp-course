@@ -158,7 +158,7 @@ setFocus a = withFocus $ const a
 -- >>> hasLeft (zipper [] 0 [1,2])
 -- False
 hasLeft :: ListZipper a -> Bool
-hasLeft = isEmpty . lefts
+hasLeft = not . isEmpty . lefts
 
 -- | Returns whether there are values to the right of focus.
 --
@@ -168,7 +168,7 @@ hasLeft = isEmpty . lefts
 -- >>> hasRight (zipper [1,0] 2 [])
 -- False
 hasRight :: ListZipper a -> Bool
-hasRight = isEmpty . rights
+hasRight = not . isEmpty . rights
 
 -- | Seek to the left for a location matching a predicate, starting from the
 -- current one.
@@ -220,8 +220,17 @@ findLeft p (ListZipper l h r) = let (t, d) = break p l
 -- >>> findRight (== 1) (zipper [2, 3] 1 [1, 4, 5, 1])
 -- [1,2,3] >1< [4,5,1]
 findRight :: (a -> Bool) -> ListZipper a -> MaybeListZipper a
-findRight p (ListZipper l h r) = findLeft p (ListZipper r h l)
+findRight p (ListZipper l h r) = let (t, d) = break p r
+                                     l' = reverse t ++ (h:.l)
+                                 in case d of
+                                      Nil -> IsNotZ
+                                      (h':.t') -> IsZ $ ListZipper l' h' t'
 
+-- findLeft p (ListZipper l h r) = let (t, d) = break p l
+--                                     r' = reverse t ++  (h:.r)
+--                                 in case d of
+--                                      Nil -> IsNotZ
+--                                      (h':.t') -> IsZ $ ListZipper t' h' r'
 
 -- | Move the zipper left, or if there are no elements to the left, go to the far right.
 --
@@ -603,7 +612,9 @@ instance Traversable ListZipper where
 -- >>> traverse id (IsZ (zipper [Full 1, Full 2, Full 3] (Full 4) [Full 5, Full 6, Full 7]))
 -- Full [1,2,3] >4< [5,6,7]
 instance Traversable MaybeListZipper where
-  traverse = error "todo: Course.ListZipper traverse#instance MaybeListZipper"
+  -- traverse = error "todo: Course.ListZipper traverse#instance MaybeListZipper"
+  traverse _ IsNotZ = pure IsNotZ
+  traverse g (IsZ z) = IsZ <$> traverse g z
 
 -----------------------
 -- SUPPORT LIBRARIES --
