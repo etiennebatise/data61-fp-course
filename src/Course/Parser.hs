@@ -3,6 +3,7 @@
 {-# LANGUAGE InstanceSigs #-}
 {-# LANGUAGE OverloadedStrings #-}
 {-# LANGUAGE RebindableSyntax #-}
+{-# LANGUAGE LambdaCase #-}
 
 module Course.Parser where
 
@@ -30,85 +31,50 @@ data ParseResult a =
   deriving Eq
 
 instance Show a => Show (ParseResult a) where
-  show UnexpectedEof =
-    "Unexpected end of stream"
-  show (ExpectedEof i) =
-    stringconcat ["Expected end of stream, but got >", show i, "<"]
-  show (UnexpectedChar c) =
-    stringconcat ["Unexpected character: ", show [c]]
-  show (UnexpectedString s) =
-    stringconcat ["Unexpected string: ", show s]
-  show (Result i a) =
-    stringconcat ["Result >", hlist i, "< ", show a]
-  
+  show UnexpectedEof = "Unexpected end of stream"
+  show (ExpectedEof i) = stringconcat ["Expected end of stream, but got >", show i, "<"]
+  show (UnexpectedChar c) = stringconcat ["Unexpected character: ", show [c]]
+  show (UnexpectedString s) = stringconcat ["Unexpected string: ", show s]
+  show (Result i a) = stringconcat ["Result >", hlist i, "< ", show a]
+
 instance Functor ParseResult where
-  _ <$> UnexpectedEof =
-    UnexpectedEof
-  _ <$> ExpectedEof i =
-    ExpectedEof i
-  _ <$> UnexpectedChar c =
-    UnexpectedChar c
-  _ <$> UnexpectedString s =
-    UnexpectedString s
-  f <$> Result i a =
-    Result i (f a)
+  _ <$> UnexpectedEof = UnexpectedEof
+  _ <$> ExpectedEof i = ExpectedEof i
+  _ <$> UnexpectedChar c = UnexpectedChar c
+  _ <$> UnexpectedString s = UnexpectedString s
+  f <$> Result i a = Result i (f a)
 
 -- Function to determine is a parse result is an error.
-isErrorResult ::
-  ParseResult a
-  -> Bool
-isErrorResult (Result _ _) =
-  False
-isErrorResult UnexpectedEof =
-  True
-isErrorResult (ExpectedEof _) =
-  True
-isErrorResult (UnexpectedChar _) =
-  True
-isErrorResult (UnexpectedString _) =
-  True
+isErrorResult :: ParseResult a -> Bool
+isErrorResult (Result _ _) = False
+isErrorResult UnexpectedEof = True
+isErrorResult (ExpectedEof _) = True
+isErrorResult (UnexpectedChar _) = True
+isErrorResult (UnexpectedString _) = True
 
 -- | Runs the given function on a successful parse result. Otherwise return the same failing parse result.
-onResult ::
-  ParseResult a
-  -> (Input -> a -> ParseResult b)
-  -> ParseResult b
-onResult UnexpectedEof _ = 
-  UnexpectedEof
-onResult (ExpectedEof i) _ = 
-  ExpectedEof i
-onResult (UnexpectedChar c) _ = 
-  UnexpectedChar c
-onResult (UnexpectedString s)  _ = 
-  UnexpectedString s
-onResult (Result i a) k = 
-  k i a
+onResult :: ParseResult a -> (Input -> a -> ParseResult b) -> ParseResult b
+onResult UnexpectedEof _ = UnexpectedEof
+onResult (ExpectedEof i) _ = ExpectedEof i
+onResult (UnexpectedChar c) _ = UnexpectedChar c
+onResult (UnexpectedString s)  _ = UnexpectedString s
+onResult (Result i a) k = k i a
 
 data Parser a = P (Input -> ParseResult a)
 
-parse ::
-  Parser a
-  -> Input
-  -> ParseResult a
-parse (P p) =
-  p
+parse :: Parser a -> Input -> ParseResult a
+parse (P p) = p
 
 -- | Produces a parser that always fails with @UnexpectedChar@ using the given character.
-unexpectedCharParser ::
-  Char
-  -> Parser a
-unexpectedCharParser c =
-  P (\_ -> UnexpectedChar c)
+unexpectedCharParser :: Char -> Parser a
+unexpectedCharParser c = P (\_ -> UnexpectedChar c)
 
 --- | Return a parser that always returns the given parse result.
 ---
 --- >>> isErrorResult (parse (constantParser UnexpectedEof) "abc")
 --- True
-constantParser ::
-  ParseResult a
-  -> Parser a
-constantParser =
-  P . const
+constantParser :: ParseResult a -> Parser a
+constantParser = P . const
 
 -- | Return a parser that succeeds with a character off the input or fails with an error if the input is empty.
 --
@@ -117,10 +83,10 @@ constantParser =
 --
 -- >>> isErrorResult (parse character "")
 -- True
-character ::
-  Parser Char
-character =
-  error "todo: Course.Parser#character"
+character :: Parser Char
+character = P $ \case
+                  Nil -> UnexpectedEof
+                  (h:.t) -> Result t h
 
 -- | Parsers can map.
 -- Write a Functor instance for a @Parser@.
@@ -128,22 +94,15 @@ character =
 -- >>> parse (toUpper <$> character) "amz"
 -- Result >mz< 'A'
 instance Functor Parser where
-  (<$>) ::
-    (a -> b)
-    -> Parser a
-    -> Parser b
-  (<$>) =
-     error "todo: Course.Parser (<$>)#instance Parser"
+  (<$>) :: (a -> b) -> Parser a -> Parser b
+  (<$>) f (P p) = P $ (f <$>) . p
 
 -- | Return a parser that always succeeds with the given value and consumes no input.
 --
 -- >>> parse (valueParser 3) "abc"
 -- Result >abc< 3
-valueParser ::
-  a
-  -> Parser a
-valueParser =
-  error "todo: Course.Parser#valueParser"
+valueParser :: a -> Parser a
+valueParser a = P $ \i -> Result i a
 
 -- | Return a parser that tries the first parser for a successful value.
 --
@@ -162,12 +121,11 @@ valueParser =
 --
 -- >>> parse (constantParser UnexpectedEof ||| valueParser 'v') "abc"
 -- Result >abc< 'v'
-(|||) ::
-  Parser a
-  -> Parser a
-  -> Parser a
-(|||) =
-  error "todo: Course.Parser#(|||)"
+(|||) :: Parser a -> Parser a -> Parser a
+(|||) l r = P $ \i -> let p = parse l i
+                          e = bool (parse r i) p
+                      in e $ isErrorResult p
+
 
 infixl 3 |||
 
@@ -175,7 +133,7 @@ infixl 3 |||
 -- Return a parser that puts its input into the given parser and
 --
 --   * if that parser succeeds with a value (a), put that value into the given function
---     then put in the remaining input in the resulting parser.
+  --     then put in the remaining input in the resulting parser.
 --
 --   * if that parser fails with an error the returned parser fails with that error.
 --
@@ -194,27 +152,22 @@ infixl 3 |||
 -- >>> isErrorResult (parse ((\c -> if c == 'x' then character else valueParser 'v') =<< character) "x")
 -- True
 instance Monad Parser where
-  (=<<) ::
-    (a -> Parser b)
-    -> Parser a
-    -> Parser b
-  (=<<) =
-    error "todo: Course.Parser (=<<)#instance Parser"
+  (=<<) :: (a -> Parser b) -> Parser a -> Parser b
+  (=<<) f (P p) = P $ \i -> case p i of
+                                 Result k l -> parse (f l) k
+                                 UnexpectedEof -> UnexpectedEof
+                                 ExpectedEof k -> ExpectedEof k
+                                 UnexpectedChar c -> UnexpectedChar c
+                                 UnexpectedString c -> UnexpectedString c
 
 -- | Write an Applicative functor instance for a @Parser@.
 -- /Tip:/ Use @(=<<)@.
 instance Applicative Parser where
-  pure ::
-    a
-    -> Parser a
-  pure =
-    valueParser
-  (<*>) ::
-    Parser (a -> b)
-    -> Parser a
-    -> Parser b
-  (<*>) =
-    error "todo: Course.Parser (<*>)#instance Parser"
+  pure :: a -> Parser a
+  pure = valueParser
+
+  (<*>) :: Parser (a -> b) -> Parser a -> Parser b
+  (<*>) = error "todo: Course.Parser (<*>)#instance Parser"
 
 -- | Return a parser that continues producing a list of values from the given parser.
 --
