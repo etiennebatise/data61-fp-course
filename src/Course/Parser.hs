@@ -153,12 +153,9 @@ infixl 3 |||
 -- True
 instance Monad Parser where
   (=<<) :: (a -> Parser b) -> Parser a -> Parser b
-  (=<<) f (P p) = P $ \i -> case p i of
-                                 Result k l -> parse (f l) k
-                                 UnexpectedEof -> UnexpectedEof
-                                 ExpectedEof k -> ExpectedEof k
-                                 UnexpectedChar c -> UnexpectedChar c
-                                 UnexpectedString c -> UnexpectedString c
+  (=<<) f (P p) = let g j x = parse (f x) j
+                      h i = onResult (p i) g
+                      in P h
 
 -- | Write an Applicative functor instance for a @Parser@.
 -- /Tip:/ Use @(=<<)@.
@@ -167,7 +164,7 @@ instance Applicative Parser where
   pure = valueParser
 
   (<*>) :: Parser (a -> b) -> Parser a -> Parser b
-  (<*>) = error "todo: Course.Parser (<*>)#instance Parser"
+  (<*>) e p = let f a = ($ a) <$> e in f =<< p
 
 -- | Return a parser that continues producing a list of values from the given parser.
 --
