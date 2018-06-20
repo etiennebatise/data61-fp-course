@@ -166,6 +166,7 @@ instance Applicative Parser where
   (<*>) :: Parser (a -> b) -> Parser a -> Parser b
   (<*>) e p = let f a = ($ a) <$> e in f =<< p
 
+
 -- | Return a parser that continues producing a list of values from the given parser.
 --
 -- /Tip:/ Use @list1@, @pure@ and @(|||)@.
@@ -187,11 +188,9 @@ instance Applicative Parser where
 --
 -- >>> parse (list (character *> valueParser 'v')) ""
 -- Result >< ""
-list ::
-  Parser a
-  -> Parser (List a)
-list =
-  error "todo: Course.Parser#list"
+list :: Parser a -> Parser (List a)
+-- list = error "todo: Course.Parser#list"
+list p = list1 p ||| pure Nil
 
 -- | Return a parser that produces at least one value from the given parser then
 -- continues producing a list of values from the given parser (to ultimately produce a non-empty list).
@@ -206,11 +205,8 @@ list =
 --
 -- >>> isErrorResult (parse (list1 (character *> valueParser 'v')) "")
 -- True
-list1 ::
-  Parser a
-  -> Parser (List a)
-list1 =
-  error "todo: Course.Parser#list1"
+list1 :: Parser a -> Parser (List a)
+list1 = error "todo: Course.Parser#list1"
 
 -- | Return a parser that produces a character but fails if
 --
