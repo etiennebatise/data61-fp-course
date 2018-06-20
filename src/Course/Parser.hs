@@ -123,7 +123,7 @@ valueParser a = P $ \i -> Result i a
 -- Result >abc< 'v'
 (|||) :: Parser a -> Parser a -> Parser a
 (|||) l r = P $ \i -> let p = parse l i
-                          e = bool (parse r i) p
+                          e = bool p (parse r i)
                       in e $ isErrorResult p
 
 
