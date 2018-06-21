@@ -4,19 +4,19 @@
 
 module Course.ParserTest where
 
-import           Data.Ratio        ((%))
-import           Test.Tasty        (TestTree, testGroup)
-import           Test.Tasty.HUnit  (testCase, (@?=))
+import           Data.Ratio         ((%))
+import           Test.Tasty         (TestTree, testGroup)
+import           Test.Tasty.HUnit   (testCase, (@?=))
 
+import           Course.Applicative (pure, (*>), (<*>))
 import           Course.Core
-import           Course.Functor        ((<$>))
-import           Course.Monad          ((=<<))
-import           Course.Applicative    ((<*>), pure)
+import           Course.Functor     ((<$>))
+import           Course.Monad       ((=<<))
 
-import           Course.List       (List (..))
-import           Course.Parser     (ParseResult (..), isErrorResult, constantParser,
-                                    character, Parser (..), valueParser, (|||),
-                                    parse)
+import           Course.List        (List (..), length)
+import           Course.Parser      (ParseResult (..), Parser (..), character,
+                                     constantParser, isErrorResult, list, list1,
+                                     parse, valueParser, (|||))
 
 test_Parser :: TestTree
 test_Parser =
@@ -27,13 +27,6 @@ test_Parser =
   , parserFunctorTest
   , valueParserTest
   , alternativeTest
-  --   jsonStringTest
-  -- , jsonNumberTest
-  -- , jsonTrueTest
-  -- , jsonFalseTest
-  -- , jsonNullTest
-  -- , jsonArrayTest
-  -- , jsonObjectTest
   ]
 
 isErrorResultTest :: TestTree
@@ -55,7 +48,7 @@ characterTest :: TestTree
 characterTest =
   testGroup "character"
   [ testCase "read character in input" $ parse character "abc" @?= Result "bc" 'a'
-  , testCase "fail when input is empty" $ isErrorResult (parse character "") @?= True
+  , testCase "fail when input is empty" $ parse character "" @?= UnexpectedEof
   ]
 
 parserFunctorTest :: TestTree
@@ -84,7 +77,7 @@ bindParserTest =
   [ testCase "(=<<) success" $
     parse ((\c -> if c == 'x' then character else valueParser 'v') =<< character) "abc" @?= Result "bc" 'v'
   , testCase "(=<<) fail" $
-    isErrorResult (parse ((\c -> if c == 'x' then character else valueParser 'v') =<< character) "") @?= True
+    parse ((\c -> if c == 'x' then character else valueParser 'v') =<< character) "" @?= UnexpectedEof
   ]
 
 pureParserTest :: TestTree
@@ -94,3 +87,27 @@ pureParserTest =
   , testCase " " $ parse (pure 'a') "abc" @?= Result "abc" 'a'
   ]
 
+applicativeParserTest :: TestTree
+applicativeParserTest =
+  testGroup "applicativeParserTest"
+  [
+    testCase "applicativeParser" $
+    parse ((P $ \i -> Result i (1+)) <*> (pure 1)) "abc" @?= Result "abc" 2
+  ]
+
+listTest :: TestTree
+listTest =
+  testGroup "listTest"
+  [
+    testCase "produce a list of values" $
+    parse (list (character)) "abc" @?= Result Nil "abc"
+  ]
+
+list1Test :: TestTree
+list1Test =
+  testGroup "list1Test"
+  [ testCase "produce a list of values" $
+    parse (list1 (character *> valueParser 'v')) "abc" @?= Result Nil "vvv"
+  , testCase "fail on empty input" $
+    parse (list1 (character *> valueParser 'v')) "" @?= UnexpectedEof
+  ]
