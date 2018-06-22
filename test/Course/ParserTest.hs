@@ -16,7 +16,7 @@ import           Course.Monad       ((=<<))
 import           Course.List        (List (..), length)
 import           Course.Parser      (ParseResult (..), Parser (..), character,
                                      constantParser, isErrorResult, list, list1,
-                                     parse, valueParser, (|||))
+                                     parse, satisfy, valueParser, (|||))
 
 test_Parser :: TestTree
 test_Parser =
@@ -106,8 +106,22 @@ listTest =
 list1Test :: TestTree
 list1Test =
   testGroup "list1Test"
-  [ testCase "produce a list of values" $
+  [ testCase "produce a list of value 1" $
+    parse (list1 (character)) "abc" @?= Result Nil "abc"
+  , testCase "produce a list of values 2" $
     parse (list1 (character *> valueParser 'v')) "abc" @?= Result Nil "vvv"
   , testCase "fail on empty input" $
     parse (list1 (character *> valueParser 'v')) "" @?= UnexpectedEof
   ]
+
+satisfyTest :: TestTree
+satisfyTest =
+  testGroup "satisfyTest"
+  [ testCase "produce a character when predicate validates" $
+    parse (satisfy isUpper) "Abc" @?= Result "bc" 'A'
+  , testCase "fail when input is empty" $
+    parse (satisfy isUpper) "" @?= UnexpectedEof
+  , testCase "fail when predicate does not valide" $
+    parse (satisfy isUpper) "abc" @?= UnexpectedChar 'a'
+  ]
+
