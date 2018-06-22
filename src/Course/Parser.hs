@@ -206,7 +206,10 @@ list p = list1 p ||| pure Nil
 -- >>> isErrorResult (parse (list1 (character *> valueParser 'v')) "")
 -- True
 list1 :: Parser a -> Parser (List a)
-list1 = error "todo: Course.Parser#list1"
+list1 p = do
+  a <- p
+  b <- list p
+  pure $ a :. b
 
 -- | Return a parser that produces a character but fails if
 --
@@ -221,11 +224,9 @@ list1 = error "todo: Course.Parser#list1"
 --
 -- >>> isErrorResult (parse (satisfy isUpper) "abc")
 -- True
-satisfy ::
-  (Char -> Bool)
-  -> Parser Char
-satisfy =
-  error "todo: Course.Parser#satisfy"
+satisfy :: (Char -> Bool) -> Parser Char
+satisfy f = let h a = bool unexpectedCharParser pure (f a) a in h =<< character
+-- satisfy f = (\a -> if f a then pure a else unexpectedCharParser a) =<< character
 
 -- | Return a parser that produces the given character but fails if
 --
