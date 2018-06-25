@@ -16,7 +16,9 @@ import           Course.Monad       ((=<<))
 import           Course.List        (List (..), length)
 import           Course.Parser      (ParseResult (..), Parser (..), character,
                                      constantParser, isErrorResult, list, list1,
-                                     parse, satisfy, valueParser, (|||))
+                                     parse, satisfy, valueParser, (|||),is,
+                                     digit, space, spaces1, lower, upper,
+                                     alpha, sequenceParser)
 
 test_Parser :: TestTree
 test_Parser =
@@ -125,3 +127,88 @@ satisfyTest =
     parse (satisfy isUpper) "abc" @?= UnexpectedChar 'a'
   ]
 
+isTest :: TestTree
+isTest =
+  testGroup "isTest"
+  [ testCase "return a parser that produce the given character" $
+    parse (is 'a') "abc" @?= Result "bc" 'a'
+  , testCase "return a parser that fails if input is empty" $
+    parse (is 'a') "" @?= UnexpectedEof
+  , testCase "return a parser that fails if the characters aren't equal" $
+    parse (is 'b') "abc" @?= UnexpectedChar 'a'
+  ]
+
+digitTest :: TestTree
+digitTest =
+  testGroup "digitTest"
+  [ testCase "return a parser that produce a character between 0 and 9" $
+    parse (digit) "1abc" @?= Result "abc" '1'
+  , testCase "return a parser that fails if input is empty" $
+    parse (digit) "" @?= UnexpectedEof
+  , testCase "return a parser that fails if the character is not a digit" $
+    parse (digit) "a" @?= UnexpectedChar 'a'
+  ]
+
+spaceTest :: TestTree
+spaceTest =
+  testGroup "spaceTest"
+  [ testCase "return a parser that produce a space character" $
+    parse (space) " abc" @?= Result "abc" ' '
+  , testCase "return a parser that fails if input is empty" $
+    parse (space) "" @?= UnexpectedEof
+  , testCase "return a parser that fails if the character is not a space" $
+    parse (space) "a" @?= UnexpectedChar 'a'
+  ]
+
+spaces1Test :: TestTree
+spaces1Test =
+  testGroup "spaces1Test"
+  [ testCase "return a parser that produces one or more spaces" $
+    parse (spaces1) "     abc" @?= Result "abc" "     "
+  , testCase "return a parser that fails if input is empty" $
+    parse (spaces1) "" @?= UnexpectedEof
+  , testCase "return a parser that fails if the first character is not a space" $
+    parse (space) "a" @?= UnexpectedChar 'a'
+  ]
+
+lowerTest :: TestTree
+lowerTest =
+  testGroup "lowerTest"
+  [ testCase "return a parser that produce a lower-case character" $
+    parse (lower) "abc" @?= Result "bc" 'a'
+  , testCase "return a parser that fails if input is empty" $
+    parse (lower) "" @?= UnexpectedEof
+  , testCase "return a parser that fails if the character is not lower-case" $
+    parse (lower) "A" @?= UnexpectedChar 'A'
+  ]
+
+upperTest :: TestTree
+upperTest =
+  testGroup "upperTest"
+  [ testCase "return a parser that produce a upper-case character" $
+    parse (upper) "Abc" @?= Result "bc" 'A'
+  , testCase "return a parser that fails if input is empty" $
+    parse (upper) "" @?= UnexpectedEof
+  , testCase "return a parser that fails if the character is not upper-case" $
+    parse (upper) "a" @?= UnexpectedChar 'a'
+  ]
+
+alphaTest :: TestTree
+alphaTest =
+  testGroup "alphaTest"
+  [
+    -- testCase "return a parser that produce a alpha character" $
+    -- parse (alpha) "alpha" @?= Result "bc" 'A'
+    testCase "return a parser that fails if input is empty" $
+    parse (alpha) "" @?= UnexpectedEof
+  , testCase "return a parser that fails if the character is not alpha" $
+    parse (alpha) "a" @?= UnexpectedChar 'a'
+  ]
+
+sequenceParserTest :: TestTree
+sequenceParserTest =
+  testGroup "sequenceParserTest"
+  [ testCase "return a parser that sequences the given list of parsers by producing all their results" $
+    parse (sequenceParser (character :. is 'x' :. upper :. Nil)) "axCdef" @?= Result "def" "axC"
+  , testCase "return a parser that fails on the first failing parser" $
+    parse (sequenceParser (character :. is 'x' :. upper :. Nil)) "abCdef" @?= UnexpectedChar 'b']
