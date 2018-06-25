@@ -19,6 +19,8 @@ import           Course.Parser      (ParseResult (..), Parser (..), character,
                                      parse, satisfy, valueParser, (|||),is,
                                      digit, space, spaces1, lower, upper,
                                      alpha, sequenceParser)
+                                     alpha, sequenceParser, thisMany, ageParser,
+                                     firstNameParser, surnameParser)
 
 test_Parser :: TestTree
 test_Parser =
@@ -212,3 +214,43 @@ sequenceParserTest =
     parse (sequenceParser (character :. is 'x' :. upper :. Nil)) "axCdef" @?= Result "def" "axC"
   , testCase "return a parser that fails on the first failing parser" $
     parse (sequenceParser (character :. is 'x' :. upper :. Nil)) "abCdef" @?= UnexpectedChar 'b']
+
+thisManyTest :: TestTree
+thisManyTest =
+  testGroup "thisManyTest"
+  [ testCase "return a parser that produces the given number of values" $
+    parse (thisMany 4 upper) "ABCDef" @?= Result "ef" "ABCD"
+  , testCase "return a parser that fails if it can't produce the given number of values" $
+    parse (thisMany 4 upper) "ABcDef" @?= UnexpectedChar 'c'
+  ]
+
+ageParserTest :: TestTree
+ageParserTest =
+  testGroup "ageParserTest"
+  [ testCase "return a parser that produce an age" $
+    parse ageParser "120" @?= Result "" 120
+  , testCase "return a parser that fails when no age can be produced 1" $
+    parse ageParser "abc" @?= UnexpectedChar 'a'
+  , (testCase) "return a parser that fails when no age can be produced 2" $
+    parse ageParser "-120" @?= UnexpectedChar '-'
+  ]
+
+firstNameParserTest :: TestTree
+firstNameParserTest =
+  testGroup "firstNameParserTest"
+  [ testCase "return a parser for Person.firstName" $
+    parse firstNameParser "Abc" @?= Result "" "Abc"
+  , testCase "return a parser that fails if not a first name" $
+    parse firstNameParser "abc" @?= UnexpectedChar 'a'
+  ]
+
+surnameParserTest :: TestTree
+surnameParserTest =
+  testGroup "surnameParserTest"
+  [ testCase "return a parser for Person.surname" $
+    parse surnameParser "Abcdefg" @?= Result "" "Abcdefg"
+  , testCase "return a parser that fails if not a surname 1" $
+    parse surnameParser "Abc" @?= UnexpectedEof
+  , testCase "return a parser that fails if not a surname 2" $
+    parse surnameParser "abc" @?= UnexpectedChar 'a'
+  ]
