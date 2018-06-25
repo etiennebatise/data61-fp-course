@@ -326,12 +326,8 @@ sequenceParser (h:.t) = (\a -> do
 --
 -- >>> isErrorResult (parse (thisMany 4 upper) "ABcDef")
 -- True
-thisMany ::
-  Int
-  -> Parser a
-  -> Parser (List a)
-thisMany =
-  error "todo: Course.Parser#thisMany"
+thisMany :: Int -> Parser a -> Parser (List a)
+thisMany n = sequenceParser . replicate n
 
 -- | This one is done for you.
 --
@@ -345,11 +341,11 @@ thisMany =
 --
 -- >>> isErrorResult (parse ageParser "-120")
 -- True
-ageParser ::
-  Parser Int
-ageParser =
-  (\k -> case read k of Empty  -> constantParser (UnexpectedString k)
-                        Full h -> pure h) =<< (list1 digit)
+ageParser :: Parser Int
+ageParser = (\k -> case read k of
+                    Empty  -> constantParser (UnexpectedString k)
+                    Full h -> pure h
+            ) =<< (list1 digit)
 
 -- | Write a parser for Person.firstName.
 -- /First Name: non-empty string that starts with a capital letter and is followed by zero or more lower-case letters/
@@ -361,10 +357,11 @@ ageParser =
 --
 -- >>> isErrorResult (parse firstNameParser "abc")
 -- True
-firstNameParser ::
-  Parser Chars
-firstNameParser =
-  error "todo: Course.Parser#firstNameParser"
+firstNameParser :: Parser Chars
+-- firstNameParser = (\a -> (\j -> pure (a:.j)) =<< list lower) =<< upper
+firstNameParser = (\u -> do
+                      l <- list lower
+                      pure (u:.l)) =<< upper
 
 -- | Write a parser for Person.surname.
 --
@@ -383,10 +380,13 @@ firstNameParser =
 --
 -- >>> isErrorResult (parse surnameParser "abc")
 -- True
-surnameParser ::
-  Parser Chars
-surnameParser =
-  error "todo: Course.Parser#surnameParser"
+surnameParser :: Parser Chars
+-- surnameParser = error "todo: Course.Parser#surnameParser"
+surnameParser = (\u -> do
+                    m <- thisMany 5 lower
+                    l <- list lower
+                    pure $ (u:.m) ++ l
+                ) =<< upper
 
 -- | Write a parser for Person.smoker.
 --
