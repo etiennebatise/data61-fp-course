@@ -20,12 +20,8 @@ import Course.Traversable
 
 -- | Parses the given input and returns the result.
 -- The remaining input is ignored.
-(<.>) ::
-  Parser a
-  -> Input
-  -> Optional a
-P p <.> i =
-  case p i of
+(<.>) :: Parser a -> Input -> Optional a
+P p <.> i = case p i of
     Result _ a -> Full a
     _          -> Empty
 
@@ -36,10 +32,8 @@ P p <.> i =
 --
 -- >>> parse spaces "abc"
 -- Result >abc< ""
-spaces ::
-  Parser Chars
-spaces =
-  error "todo: Course.MoreParser#spaces"
+spaces :: Parser Chars
+spaces = spaces1 ||| pure Nil
 
 -- | Write a function that applies the given parser, then parses 0 or more spaces,
 -- then produces the result of the original parser.
@@ -47,30 +41,28 @@ spaces =
 -- /Tip:/ Use the monad instance.
 --
 -- >>> parse (tok (is 'a')) "a bc"
--- Result >bc< 'a'
+-- Result >b c< 'a'
 --
 -- >>> parse (tok (is 'a')) "abc"
 -- Result >bc< 'a'
-tok ::
-  Parser a
-  -> Parser a
-tok =
-  error "todo: Course.MoreParser#tok"
+tok :: Parser a -> Parser a
+-- tok = error "todo: Course.MoreParser#tok"
+tok p = do q <- p
+           _ <- spaces
+           pure q
 
 -- | Write a function that parses the given char followed by 0 or more spaces.
 --
--- >>> parse (charTok 'a') "abc"
+-- >>> parse (chartok 'a') "abc"
 -- Result >bc< 'a'
 --
 -- >>> isErrorResult (parse (charTok 'a') "dabc")
 -- True
--- 
+--
 -- /Tip:/ Use `tok` and `is`.
-charTok ::
-  Char
-  -> Parser Char
-charTok =
-  error "todo: Course.MoreParser#charTok"
+charTok :: Char -> Parser Char
+-- charTok = error "todo: Course.MoreParser#charTok"
+charTok = tok . is
 
 -- | Write a parser that parses a comma ',' followed by 0 or more spaces.
 --
@@ -79,12 +71,11 @@ charTok =
 --
 -- >>> isErrorResult( parse commaTok "1,23")
 -- True
--- 
+--
 -- /Tip:/ Use `charTok`.
-commaTok ::
-  Parser Char
-commaTok =
-  error "todo: Course.MoreParser#commaTok"
+commaTok :: Parser Char
+-- commaTok = error "todo: Course.MoreParser#commaTok"
+commaTok = charTok ','
 
 -- | Write a parser that parses either a double-quote or a single-quote.
 --
@@ -98,25 +89,24 @@ commaTok =
 --
 -- >>> isErrorResult (parse quote "abc")
 -- True
-quote ::
-  Parser Char
-quote =
-  error "todo: Course.MoreParser#quote"
+quote :: Parser Char
+quote = is '\'' ||| is '\"'
 
 -- | Write a function that parses the given string (fails otherwise).
 --
 -- /Tip:/ Use `is` and `traverse`.
+-- traverse :: Applicative f => (a -> f b) -> t a -> f (t b)
 --
 -- >>> parse (string "abc") "abcdef"
 -- Result >def< "abc"
 --
 -- >>> isErrorResult (parse (string "abc") "bcdef")
 -- True
-string ::
-  Chars
-  -> Parser Chars
-string =
-  error "todo: Course.MoreParser#is"
+string :: Chars -> Parser Chars
+string Nil = pure Nil
+string (x:.xs) = do i <- is x
+                    j <- string xs
+                    pure (i:.j)
 
 -- | Write a function that parsers the given string, followed by 0 or more spaces.
 --
