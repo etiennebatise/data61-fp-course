@@ -402,10 +402,8 @@ surnameParser = (\u -> do
 --
 -- >>> isErrorResult (parse smokerParser "abc")
 -- True
-smokerParser ::
-  Parser Bool
-smokerParser =
-  error "todo: Course.Parser#smokerParser"
+smokerParser :: Parser Bool
+smokerParser = ((const . pure $ True) =<< is 'y') ||| (const (pure False) =<< is 'n')
 
 -- | Write part of a parser for Person#phoneBody.
 -- This parser will only produce a string of digits, dots or hyphens.
@@ -424,10 +422,8 @@ smokerParser =
 --
 -- >>> parse phoneBodyParser "a123-456"
 -- Result >a123-456< ""
-phoneBodyParser ::
-  Parser Chars
-phoneBodyParser =
-  error "todo: Course.Parser#phoneBodyParser"
+phoneBodyParser :: Parser Chars
+phoneBodyParser = list $ digit ||| is '.' ||| is '-'
 
 -- | Write a parser for Person.phone.
 --
@@ -446,10 +442,12 @@ phoneBodyParser =
 --
 -- >>> isErrorResult (parse phoneParser "a123-456")
 -- True
-phoneParser ::
-  Parser Chars
-phoneParser =
-  error "todo: Course.Parser#phoneParser"
+phoneParser :: Parser Chars
+phoneParser = (\a -> do
+                  b <- phoneBodyParser
+                  _ <- is '#'
+                  pure (a:.b)
+              ) =<< digit
 
 -- | Write a parser for Person.
 --
@@ -500,10 +498,18 @@ phoneParser =
 --
 -- >>> parse personParser "123  Fred   Clarkson    y     123-456.789#"
 -- Result >< Person 123 "Fred" "Clarkson" True "123-456.789"
-personParser ::
-  Parser Person
-personParser =
-  error "todo: Course.Parser#personParser"
+personParser :: Parser Person
+personParser = (\a -> do
+                   _ <- spaces1
+                   b <- firstNameParser
+                   _ <- spaces1
+                   c <- surnameParser
+                   _ <- spaces1
+                   d <- smokerParser
+                   _ <- spaces1
+                   e <- phoneParser
+                   pure $ Person a b c d e
+               ) =<< ageParser
 
 -- Make sure all the tests pass!
 
@@ -511,22 +517,14 @@ personParser =
 
 -- Did you repeat yourself in `personParser` ? This might help:
 
-(>>=~) ::
-  Parser a
-  -> (a -> Parser b)
-  -> Parser b
-(>>=~) p f =
-  (p <* spaces1) >>= f
+(>>=~) :: Parser a -> (a -> Parser b) -> Parser b
+(>>=~) p f = (p <* spaces1) >>= f
 
 infixl 1 >>=~
 
 -- or maybe this
 
-(<*>~) ::
-  Parser (a -> b)
-  -> Parser a
-  -> Parser b
-(<*>~) f a =
-  f <*> spaces1 *> a
+(<*>~) :: Parser (a -> b) -> Parser a -> Parser b
+(<*>~) f a = f <*> spaces1 *> a
 
 infixl 4 <*>~
