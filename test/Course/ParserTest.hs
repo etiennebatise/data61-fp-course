@@ -14,13 +14,16 @@ import           Course.Functor     ((<$>))
 import           Course.Monad       ((=<<))
 
 import           Course.List        (List (..), length)
-import           Course.Parser      (ParseResult (..), Parser (..), character,
-                                     constantParser, isErrorResult, list, list1,
-                                     parse, satisfy, valueParser, (|||),is,
-                                     digit, space, spaces1, lower, upper,
-                                     alpha, sequenceParser)
-                                     alpha, sequenceParser, thisMany, ageParser,
-                                     firstNameParser, surnameParser)
+import           Course.Parser      (ParseResult (..), Parser (..), ageParser,
+                                     alpha, character, constantParser, digit,
+                                     firstNameParser, is, isErrorResult, list,
+                                     list1, lower, parse, personParser,
+                                     phoneBodyParser, phoneParser, satisfy,
+                                     sequenceParser, smokerParser, space,
+                                     spaces1, surnameParser, thisMany, upper,
+                                     valueParser, (|||))
+
+import           Course.Person      (Person (..))
 
 test_Parser :: TestTree
 test_Parser =
@@ -36,35 +39,47 @@ test_Parser =
 isErrorResultTest :: TestTree
 isErrorResultTest =
   testGroup "isErrorResult"
-  [ testCase "True when UnexpectedEof" $ isErrorResult (UnexpectedEof) @?= True
-  , testCase "True when ExpectedEof" $ isErrorResult (ExpectedEof "a") @?= True
-  , testCase "True when UnexpectedChar" $ isErrorResult (UnexpectedChar 'a') @?= True
-  , testCase "True when UnexpectedString" $ isErrorResult (UnexpectedString "abc") @?= True
-  , testCase "False when Result" $ isErrorResult (Result "abc" "a") @?= False
+  [ testCase "True when UnexpectedEof" $
+    isErrorResult (UnexpectedEof) @?= True
+  , testCase "True when ExpectedEof" $
+    isErrorResult (ExpectedEof "a") @?= True
+  , testCase "True when UnexpectedChar" $
+    isErrorResult (UnexpectedChar 'a') @?= True
+  , testCase "True when UnexpectedString" $
+    isErrorResult (UnexpectedString "abc") @?= True
+  , testCase "False when Result" $
+    isErrorResult (Result "abc" "a") @?= False
   ]
 
 constantParserTest :: TestTree
 constantParserTest =
   testGroup "constantParser"
-  [ testCase "always return given result" $ parse (constantParser $ Result "abc" 'z') "Lorem" @?= Result "abc" 'z' ]
+  [ testCase "always return given result" $
+    parse (constantParser $ Result "abc" 'z') "Lorem" @?= Result "abc" 'z'
+  ]
 
 characterTest :: TestTree
 characterTest =
   testGroup "character"
-  [ testCase "read character in input" $ parse character "abc" @?= Result "bc" 'a'
-  , testCase "fail when input is empty" $ parse character "" @?= UnexpectedEof
+  [ testCase "read character in input" $
+    parse character "abc" @?= Result "bc" 'a'
+  , testCase "fail when input is empty" $
+    parse character "" @?= UnexpectedEof
   ]
 
 parserFunctorTest :: TestTree
 parserFunctorTest =
   testGroup "parserFunctor"
-  [ testCase "parser can map" $ parse (toUpper <$> character) "amz" @?= Result "mz" 'A' ]
+  [ testCase "parser can map"
+    $ parse (toUpper <$> character) "amz" @?= Result "mz" 'A'
+  ]
 
 valueParserTest :: TestTree
 valueParserTest =
   testGroup "valueParser"
   [ testCase "always succeed with the given value" $
-    parse (valueParser 3) "abc" @?= Result "abc" 3 ]
+    parse (valueParser 3) "abc" @?= Result "abc" 3
+  ]
 
 alternativeTest :: TestTree
 alternativeTest =
@@ -94,16 +109,14 @@ pureParserTest =
 applicativeParserTest :: TestTree
 applicativeParserTest =
   testGroup "applicativeParserTest"
-  [
-    testCase "applicativeParser" $
+  [ testCase "applicativeParser" $
     parse ((P $ \i -> Result i (1+)) <*> (pure 1)) "abc" @?= Result "abc" 2
   ]
 
 listTest :: TestTree
 listTest =
   testGroup "listTest"
-  [
-    testCase "produce a list of values" $
+  [ testCase "produce a list of values" $
     parse (list (character)) "abc" @?= Result Nil "abc"
   ]
 
@@ -253,4 +266,67 @@ surnameParserTest =
     parse surnameParser "Abc" @?= UnexpectedEof
   , testCase "return a parser that fails if not a surname 2" $
     parse surnameParser "abc" @?= UnexpectedChar 'a'
+  ]
+
+smokerParserTest :: TestTree
+smokerParserTest =
+  testGroup "smokerParserTest"
+  [ testCase "return a parser for Person.smoker 1" $
+    parse smokerParser "yabc" @?= Result "abc" True
+  , testCase "return a parser for Person.smoker 2" $
+    parse smokerParser "nabc" @?= Result "abc" False
+  , testCase "return a parser that fails if not 'y' or 'n'" $
+    parse smokerParser "abc" @?= UnexpectedChar 'a'
+  ]
+
+phoneBodyParserTest :: TestTree
+phoneBodyParserTest =
+  testGroup "phoneGroupParserTest"
+  [ testCase "return parser for Person.phoneBody 1" $
+    parse phoneBodyParser "123-456" @?= Result "" "123-456"
+  , testCase "return parser for Person.phoneBody 2" $
+    parse phoneBodyParser "123-4a56" @?= Result "a56" "123-4"
+  , testCase "return parser for Person.phoneBody 3" $
+    parse phoneBodyParser "a123-456" @?= Result "a123-456" ""
+  ]
+
+phoneParserTest :: TestTree
+phoneParserTest =
+  testGroup "phoneParserTest"
+  [ testCase "return parser for Person.phoneBody 1" $
+    parse phoneParser "123-456#" @?= Result "" "123-456"
+  , testCase "return parser for Person.phoneBody 2" $
+    parse phoneParser "123-456#abc" @?= Result "abc" "123-456"
+  , testCase "return parser for Person.phoneBody 3" $
+    parse phoneParser "123-456" @?= UnexpectedEof
+  , testCase "return parser for Person.phoneBody 4" $
+    parse phoneParser "a123-456" @?= UnexpectedChar 'a'
+  ]
+
+personParserTest :: TestTree
+personParserTest =
+  testGroup "personParserTest"
+  [
+    testCase "return a parser for Person 1" $
+    parse personParser "" @?= UnexpectedEof
+  , testCase "return a parser for Person 2" $
+    parse personParser "12x Fred Clarkson y 123-456.789#" @?= UnexpectedChar 'a'
+  , testCase "return a parser for Person 3" $
+    parse personParser "123 fred Clarkson y 123-456.789#" @?= UnexpectedChar 'f'
+  , testCase "return a parser for Person 4" $
+    parse personParser "123 Fred Cla y 123-456.789#" @?= UnexpectedChar ' '
+  , testCase "return a parser for Person 5" $
+    parse personParser "123 Fred clarkson y 123-456.789#" @?= UnexpectedChar 'c'
+  , testCase "return a parser for Person 6" $
+    parse personParser "123 Fred Clarkson x 123-456.789#" @?= UnexpectedChar 'x'
+  , testCase "return a parser for Person 6" $
+    parse personParser "123 Fred Clarkson y 1x3-456.789#" @?= UnexpectedChar 'x'
+  , testCase "return a parser for Person 7" $
+    parse personParser "123 Fred Clarkson y -123-456.789#" @?= UnexpectedChar '-'
+  , testCase "return a parser for Person 8" $
+    parse personParser "123 Fred Clarkson y 123-456.789" @?= UnexpectedEof
+  , testCase "return a parser for Person 9" $
+    parse personParser "123 Fred Clarkson y 123-456.789# rest" @?= Result " rest" (Person 123 "Fred" "Clarkson" True "123-456.789")
+  , testCase "return a parser for Person 9" $
+    parse personParser "123  Fred   Clarkson    y     123-456.789#" @?= Result "" (Person 123 "Fred" "Clarkson" True "123-456.789")
   ]
