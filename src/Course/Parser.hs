@@ -205,10 +205,9 @@ list p = list1 p ||| pure Nil
 -- >>> isErrorResult (parse (list1 (character *> valueParser 'v')) "")
 -- True
 list1 :: Parser a -> Parser (List a)
-list1 p = do
-  a <- p
-  b <- list p
-  pure $ a :. b
+list1 p = do a <- p
+             b <- list p
+             pure $ a :. b
 
 -- | Return a parser that produces a character but fails if
 --
@@ -312,9 +311,9 @@ alpha = satisfy isAlpha
 -- True
 sequenceParser :: List (Parser a) -> Parser (List a)
 sequenceParser Nil    = pure Nil
-sequenceParser (h:.t) = (\a -> do
-                              l' <- sequenceParser t
-                              pure (a:.l')) =<< h
+sequenceParser (h:.t) = do a <- h
+                           l' <- sequenceParser t
+                           pure (a:.l')
 
 -- | Return a parser that produces the given number of values off the given parser.
 -- This parser fails if the given parser fails in the attempt to produce the given number of values.
@@ -359,9 +358,9 @@ ageParser = (\k -> case read k of
 -- True
 firstNameParser :: Parser Chars
 -- firstNameParser = (\a -> (\j -> pure (a:.j)) =<< list lower) =<< upper
-firstNameParser = (\u -> do
-                      l <- list lower
-                      pure (u:.l)) =<< upper
+firstNameParser = do u <- upper
+                     l <- list lower
+                     pure (u:.l)
 
 -- | Write a parser for Person.surname.
 --
@@ -382,11 +381,10 @@ firstNameParser = (\u -> do
 -- True
 surnameParser :: Parser Chars
 -- surnameParser = error "todo: Course.Parser#surnameParser"
-surnameParser = (\u -> do
-                    m <- thisMany 5 lower
-                    l <- list lower
-                    pure $ (u:.m) ++ l
-                ) =<< upper
+surnameParser = do u <- upper
+                   m <- thisMany 5 lower
+                   l <- list lower
+                   pure $ (u:.m) ++ l
 
 -- | Write a parser for Person.smoker.
 --
@@ -443,11 +441,10 @@ phoneBodyParser = list $ digit ||| is '.' ||| is '-'
 -- >>> isErrorResult (parse phoneParser "a123-456")
 -- True
 phoneParser :: Parser Chars
-phoneParser = (\a -> do
-                  b <- phoneBodyParser
-                  _ <- is '#'
-                  pure (a:.b)
-              ) =<< digit
+phoneParser = do a <- digit
+                 b <- phoneBodyParser
+                 _ <- is '#'
+                 pure (a:.b)
 
 -- | Write a parser for Person.
 --
@@ -499,17 +496,16 @@ phoneParser = (\a -> do
 -- >>> parse personParser "123  Fred   Clarkson    y     123-456.789#"
 -- Result >< Person 123 "Fred" "Clarkson" True "123-456.789"
 personParser :: Parser Person
-personParser = (\a -> do
-                   _ <- spaces1
-                   b <- firstNameParser
-                   _ <- spaces1
-                   c <- surnameParser
-                   _ <- spaces1
-                   d <- smokerParser
-                   _ <- spaces1
-                   e <- phoneParser
-                   pure $ Person a b c d e
-               ) =<< ageParser
+personParser = do a <- ageParser
+                  _ <- spaces1
+                  b <- firstNameParser
+                  _ <- spaces1
+                  c <- surnameParser
+                  _ <- spaces1
+                  d <- smokerParser
+                  _ <- spaces1
+                  e <- phoneParser
+                  pure $ Person a b c d e
 
 -- Make sure all the tests pass!
 

@@ -34,6 +34,28 @@ test_Parser =
   , parserFunctorTest
   , valueParserTest
   , alternativeTest
+  , bindParserTest
+  , pureParserTest
+  , applicativeParserTest
+  , listTest
+  , list1Test
+  , satisfyTest
+  , isTest
+  , digitTest
+  , spaceTest
+  , spaces1Test
+  , lowerTest
+  , upperTest
+  , alphaTest
+  , sequenceParserTest
+  , thisManyTest
+  , ageParserTest
+  , firstNameParserTest
+  , surnameParserTest
+  , smokerParserTest
+  , phoneBodyParserTest
+  , phoneParserTest
+  , personParserTest
   ]
 
 isErrorResultTest :: TestTree
@@ -108,21 +130,21 @@ pureParserTest =
 
 applicativeParserTest :: TestTree
 applicativeParserTest =
-  testGroup "applicativeParserTest"
+  testGroup "applicativeParser"
   [ testCase "applicativeParser" $
     parse ((P $ \i -> Result i (1+)) <*> (pure 1)) "abc" @?= Result "abc" 2
   ]
 
 listTest :: TestTree
 listTest =
-  testGroup "listTest"
+  testGroup "list"
   [ testCase "produce a list of values" $
     parse (list (character)) "abc" @?= Result Nil "abc"
   ]
 
 list1Test :: TestTree
 list1Test =
-  testGroup "list1Test"
+  testGroup "list1"
   [ testCase "produce a list of value 1" $
     parse (list1 (character)) "abc" @?= Result Nil "abc"
   , testCase "produce a list of values 2" $
@@ -133,7 +155,7 @@ list1Test =
 
 satisfyTest :: TestTree
 satisfyTest =
-  testGroup "satisfyTest"
+  testGroup "satisfy"
   [ testCase "produce a character when predicate validates" $
     parse (satisfy isUpper) "Abc" @?= Result "bc" 'A'
   , testCase "fail when input is empty" $
@@ -144,7 +166,7 @@ satisfyTest =
 
 isTest :: TestTree
 isTest =
-  testGroup "isTest"
+  testGroup "is"
   [ testCase "return a parser that produce the given character" $
     parse (is 'a') "abc" @?= Result "bc" 'a'
   , testCase "return a parser that fails if input is empty" $
@@ -155,7 +177,7 @@ isTest =
 
 digitTest :: TestTree
 digitTest =
-  testGroup "digitTest"
+  testGroup "digit"
   [ testCase "return a parser that produce a character between 0 and 9" $
     parse (digit) "1abc" @?= Result "abc" '1'
   , testCase "return a parser that fails if input is empty" $
@@ -166,7 +188,7 @@ digitTest =
 
 spaceTest :: TestTree
 spaceTest =
-  testGroup "spaceTest"
+  testGroup "space"
   [ testCase "return a parser that produce a space character" $
     parse (space) " abc" @?= Result "abc" ' '
   , testCase "return a parser that fails if input is empty" $
@@ -177,7 +199,7 @@ spaceTest =
 
 spaces1Test :: TestTree
 spaces1Test =
-  testGroup "spaces1Test"
+  testGroup "spaces1"
   [ testCase "return a parser that produces one or more spaces" $
     parse (spaces1) "     abc" @?= Result "abc" "     "
   , testCase "return a parser that fails if input is empty" $
@@ -188,7 +210,7 @@ spaces1Test =
 
 lowerTest :: TestTree
 lowerTest =
-  testGroup "lowerTest"
+  testGroup "lower"
   [ testCase "return a parser that produce a lower-case character" $
     parse (lower) "abc" @?= Result "bc" 'a'
   , testCase "return a parser that fails if input is empty" $
@@ -199,7 +221,7 @@ lowerTest =
 
 upperTest :: TestTree
 upperTest =
-  testGroup "upperTest"
+  testGroup "upper"
   [ testCase "return a parser that produce a upper-case character" $
     parse (upper) "Abc" @?= Result "bc" 'A'
   , testCase "return a parser that fails if input is empty" $
@@ -210,7 +232,7 @@ upperTest =
 
 alphaTest :: TestTree
 alphaTest =
-  testGroup "alphaTest"
+  testGroup "alpha"
   [
     -- testCase "return a parser that produce a alpha character" $
     -- parse (alpha) "alpha" @?= Result "bc" 'A'
@@ -222,7 +244,7 @@ alphaTest =
 
 sequenceParserTest :: TestTree
 sequenceParserTest =
-  testGroup "sequenceParserTest"
+  testGroup "sequenceParser"
   [ testCase "return a parser that sequences the given list of parsers by producing all their results" $
     parse (sequenceParser (character :. is 'x' :. upper :. Nil)) "axCdef" @?= Result "def" "axC"
   , testCase "return a parser that fails on the first failing parser" $
@@ -230,7 +252,7 @@ sequenceParserTest =
 
 thisManyTest :: TestTree
 thisManyTest =
-  testGroup "thisManyTest"
+  testGroup "thisMany"
   [ testCase "return a parser that produces the given number of values" $
     parse (thisMany 4 upper) "ABCDef" @?= Result "ef" "ABCD"
   , testCase "return a parser that fails if it can't produce the given number of values" $
@@ -239,7 +261,7 @@ thisManyTest =
 
 ageParserTest :: TestTree
 ageParserTest =
-  testGroup "ageParserTest"
+  testGroup "ageParser"
   [ testCase "return a parser that produce an age" $
     parse ageParser "120" @?= Result "" 120
   , testCase "return a parser that fails when no age can be produced 1" $
@@ -250,7 +272,7 @@ ageParserTest =
 
 firstNameParserTest :: TestTree
 firstNameParserTest =
-  testGroup "firstNameParserTest"
+  testGroup "firstNameParser"
   [ testCase "return a parser for Person.firstName" $
     parse firstNameParser "Abc" @?= Result "" "Abc"
   , testCase "return a parser that fails if not a first name" $
@@ -259,7 +281,7 @@ firstNameParserTest =
 
 surnameParserTest :: TestTree
 surnameParserTest =
-  testGroup "surnameParserTest"
+  testGroup "surnameParser"
   [ testCase "return a parser for Person.surname" $
     parse surnameParser "Abcdefg" @?= Result "" "Abcdefg"
   , testCase "return a parser that fails if not a surname 1" $
@@ -270,7 +292,7 @@ surnameParserTest =
 
 smokerParserTest :: TestTree
 smokerParserTest =
-  testGroup "smokerParserTest"
+  testGroup "smokerParser"
   [ testCase "return a parser for Person.smoker 1" $
     parse smokerParser "yabc" @?= Result "abc" True
   , testCase "return a parser for Person.smoker 2" $
@@ -281,7 +303,7 @@ smokerParserTest =
 
 phoneBodyParserTest :: TestTree
 phoneBodyParserTest =
-  testGroup "phoneGroupParserTest"
+  testGroup "phoneGroupParser"
   [ testCase "return parser for Person.phoneBody 1" $
     parse phoneBodyParser "123-456" @?= Result "" "123-456"
   , testCase "return parser for Person.phoneBody 2" $
@@ -292,7 +314,7 @@ phoneBodyParserTest =
 
 phoneParserTest :: TestTree
 phoneParserTest =
-  testGroup "phoneParserTest"
+  testGroup "phoneParser"
   [ testCase "return parser for Person.phoneBody 1" $
     parse phoneParser "123-456#" @?= Result "" "123-456"
   , testCase "return parser for Person.phoneBody 2" $
@@ -305,7 +327,7 @@ phoneParserTest =
 
 personParserTest :: TestTree
 personParserTest =
-  testGroup "personParserTest"
+  testGroup "personParser"
   [
     testCase "return a parser for Person 1" $
     parse personParser "" @?= UnexpectedEof
