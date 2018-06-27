@@ -25,7 +25,7 @@ import           Course.Parser      (ParseResult (..), Parser (..), ageParser,
 import           Course.Person      (Person (..))
 
 import           Course.MoreParser  (charTok, commaTok, quote, spaces, string,
-                                     tok, (<.>))
+                                     tok, (<.>), stringTok, option, digits1)
 
 test_MoreParser :: TestTree
 test_MoreParser =
@@ -36,6 +36,9 @@ test_MoreParser =
   , commaTokTest
   , quoteTest
   , stringTest
+  , stringTokTest
+  , optionTest
+  , digits1Test
   ]
 
 spacesTest :: TestTree
@@ -96,3 +99,31 @@ stringTest =
   , testCase "fail otherwise" $
     parse (string "abc") "bcdef" @?= UnexpectedChar 'b'
   ]
+
+stringTokTest :: TestTree
+stringTokTest =
+  testGroup "stringTok"
+  [ testCase "parse the given string and consume spaces" $
+    parse (stringTok "abc") "abc  " @?= Result "" "abc"
+  , testCase "fail otherwise" $
+    parse (stringTok "abc") "bc  " @?= UnexpectedChar 'b'
+  ]
+
+optionTest :: TestTree
+optionTest =
+  testGroup "option"
+  [ testCase "run the given parser" $
+    parse (option 'x' character) "abc" @?= Result "bc" 'a'
+  , testCase "produce the given value if parser fails" $
+    parse (option 'x' character) "" @?= Result "" 'x'
+  ]
+
+digits1Test :: TestTree
+digits1Test =
+  testGroup "digits1"
+  [ testCase "parse 1 or more digits" $
+    parse digits1 "123" @?= Result "" "123"
+  , testCase "fail if no digits" $
+    parse digits1 "abc123" @?= UnexpectedChar 'a'
+  ]
+
