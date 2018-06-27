@@ -46,7 +46,6 @@ spaces = spaces1 ||| pure Nil
 -- >>> parse (tok (is 'a')) "abc"
 -- Result >bc< 'a'
 tok :: Parser a -> Parser a
--- tok = error "todo: Course.MoreParser#tok"
 tok p = do q <- p
            _ <- spaces
            pure q
@@ -61,7 +60,6 @@ tok p = do q <- p
 --
 -- /Tip:/ Use `tok` and `is`.
 charTok :: Char -> Parser Char
--- charTok = error "todo: Course.MoreParser#charTok"
 charTok = tok . is
 
 -- | Write a parser that parses a comma ',' followed by 0 or more spaces.
@@ -74,7 +72,6 @@ charTok = tok . is
 --
 -- /Tip:/ Use `charTok`.
 commaTok :: Parser Char
--- commaTok = error "todo: Course.MoreParser#commaTok"
 commaTok = charTok ','
 
 -- | Write a parser that parses either a double-quote or a single-quote.
@@ -119,7 +116,6 @@ string = traverse is
 -- >>> isErrorResult (parse (stringTok "abc") "bc  ")
 -- True
 stringTok :: Chars -> Parser Chars
--- stringTok = error "todo: Course.MoreParser#stringTok"
 stringTok = tok . string
 
 -- | Write a function that tries the given parser, otherwise succeeds by producing the given value.
@@ -155,11 +151,8 @@ digits1 = list1 digit
 --
 -- >>> isErrorResult (parse (oneof "abc") "def")
 -- True
-oneof ::
-  Chars
-  -> Parser Char
-oneof =
-  error "todo: Course.MoreParser#oneof"
+oneof :: Chars -> Parser Char
+oneof = satisfy . flip elem
 
 -- | Write a function that parses any character, but fails if it is in the given string.
 --
@@ -170,11 +163,8 @@ oneof =
 --
 -- >>> isErrorResult (parse (noneof "abcd") "abc")
 -- True
-noneof ::
-  Chars
-  -> Parser Char
-noneof =
-  error "todo: Course.MoreParser#noneof"
+noneof :: Chars -> Parser Char
+noneof = satisfy . flip notElem
 
 -- | Write a function that applies the first parser, runs the third parser keeping the result,
 -- then runs the second parser and produces the obtained result.
@@ -192,13 +182,11 @@ noneof =
 --
 -- >>> isErrorResult (parse (between (is '[') (is ']') character) "abc]")
 -- True
-between ::
-  Parser o
-  -> Parser c
-  -> Parser a
-  -> Parser a
-between =
-  error "todo: Course.MoreParser#between"
+between :: Parser o -> Parser c -> Parser a -> Parser a
+between o c a = do _ <- o
+                   r <- a
+                   _ <- c
+                   pure r
 
 -- | Write a function that applies the given parser in between the two given characters.
 --
@@ -215,13 +203,8 @@ between =
 --
 -- >>> isErrorResult (parse (betweenCharTok '[' ']' character) "abc]")
 -- True
-betweenCharTok ::
-  Char
-  -> Char
-  -> Parser a
-  -> Parser a
-betweenCharTok =
-  error "todo: Course.MoreParser#betweenCharTok"
+betweenCharTok :: Char -> Char -> Parser a -> Parser a
+betweenCharTok o c = between (charTok o) (charTok c)
 
 -- | Write a function that parses 4 hex digits and return the character value.
 --
