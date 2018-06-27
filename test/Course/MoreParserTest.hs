@@ -24,8 +24,9 @@ import           Course.Parser      (ParseResult (..), Parser (..), ageParser,
                                      valueParser, (|||))
 import           Course.Person      (Person (..))
 
-import           Course.MoreParser  (charTok, commaTok, quote, spaces, string,
-                                     tok, (<.>), stringTok, option, digits1)
+import           Course.MoreParser  (between, betweenCharTok, charTok, commaTok,
+                                     digits1, noneof, oneof, option, quote,
+                                     spaces, string, stringTok, tok, (<.>))
 
 test_MoreParser :: TestTree
 test_MoreParser =
@@ -39,6 +40,10 @@ test_MoreParser =
   , stringTokTest
   , optionTest
   , digits1Test
+  , oneofTest
+  , noneofTest
+  , betweenTest
+  , betweenCharTokTest
   ]
 
 spacesTest :: TestTree
@@ -127,3 +132,47 @@ digits1Test =
     parse digits1 "abc123" @?= UnexpectedChar 'a'
   ]
 
+oneofTest :: TestTree
+oneofTest =
+  testGroup "oneof"
+  [ testCase "parses one of the characters in the given string" $
+    parse (oneof "abc") "bcdef" @?= Result "cdef" 'b'
+  , testCase "fail if none of characters is in the given string" $
+    parse (oneof "abc") "def" @?= UnexpectedChar 'd'
+  ]
+
+noneofTest :: TestTree
+noneofTest =
+  testGroup "noneof"
+  [ testCase "parses any characters not in the given string" $
+    parse (noneof "bcd") "abc" @?= Result "bc" 'a'
+  , testCase "fail if one characters is in the given string" $
+    parse (noneof "abcd") "abc" @?= UnexpectedChar 'a'
+  ]
+
+betweenTest :: TestTree
+betweenTest =
+  testGroup "between"
+  [ testCase "run the first parser, then third keeping the result, then second" $
+    parse (between (is '[') (is ']') character) "[a]" @?= Result "" 'a'
+  , testCase "fail if first parser fails" $
+    parse (between (is '[') (is ']') character) "a]" @?= UnexpectedChar 'a'
+  , testCase "fail if second parser fails" $
+    parse (between (is '[') (is ']') character) "[abc]" @?= UnexpectedChar 'b'
+  , testCase "fail if third parser fails" $
+    parse (between (is '[') (is ']') character) "[a" @?= UnexpectedEof
+  ]
+
+betweenCharTokTest :: TestTree
+betweenCharTokTest =
+  testGroup "betweenCharTok"
+  [
+    testCase "run the parser between two delimiters" $
+    parse (betweenCharTok '[' ']' character) "[a]" @?= Result "" 'a'
+  , testCase "fail if the parser fails" $
+    parse (betweenCharTok '[' ']' character) "[abc]" @?= UnexpectedChar 'b'
+   , testCase "fail if the left delimiter is not found" $
+   parse (betweenCharTok '[' ']' character) "a]" @?= UnexpectedChar 'a'
+   , testCase "fail if the right delimiter is not found" $
+   parse (betweenCharTok '[' ']' character) "[a" @?= UnexpectedEof
+  ]
