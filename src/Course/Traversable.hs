@@ -29,7 +29,10 @@ class Functor t => Traversable t where
 instance Traversable List where
   traverse :: Applicative f => (a -> f b) -> List a -> f (List b)
   traverse _ Nil = pure Nil
-  traverse g l = foldRight(lift2 (:.) . g) (pure Nil) l
+  traverse g (h:.t) = let fb = g h
+                          flb = traverse g t
+                        in lift2 (flip (:.)) flb fb
+  -- traverse g l = foldLeft (\acc i -> lift2 (flip (:.)) acc (g i)) (pure Nil) l
 
 instance Traversable ExactlyOne where
   traverse :: Applicative f => (a -> f b) -> ExactlyOne a -> f (ExactlyOne b)
@@ -56,7 +59,6 @@ sequenceA = traverse id
 
 instance (Traversable f, Traversable g) => Traversable (Compose f g) where
 -- Implement the traverse function for a Traversable instance for Compose
-  -- traverse = error "todo: Course.Traversable traverse#instance (Compose f g)"
   traverse g (Compose b) = Compose <$> traverse (traverse g) b
 
 -- | The `Product` data type contains one value from each of the two type constructors.
