@@ -103,10 +103,11 @@ quote = is '\'' ||| is '\"'
 -- >>> isErrorResult (parse (string "abc") "bcdef")
 -- True
 string :: Chars -> Parser Chars
-string Nil = pure Nil
-string (x:.xs) = do i <- is x
-                    j <- string xs
-                    pure (i:.j)
+string = traverse is
+-- string Nil = pure Nil
+-- string (x:.xs) = do i <- is x
+--                     j <- string xs
+--                     pure (i:.j)
 
 -- | Write a function that parsers the given string, followed by 0 or more spaces.
 --
@@ -117,11 +118,9 @@ string (x:.xs) = do i <- is x
 --
 -- >>> isErrorResult (parse (stringTok "abc") "bc  ")
 -- True
-stringTok ::
-  Chars
-  -> Parser Chars
-stringTok =
-  error "todo: Course.MoreParser#stringTok"
+stringTok :: Chars -> Parser Chars
+-- stringTok = error "todo: Course.MoreParser#stringTok"
+stringTok = tok . string
 
 -- | Write a function that tries the given parser, otherwise succeeds by producing the given value.
 --
@@ -132,12 +131,8 @@ stringTok =
 --
 -- >>> parse (option 'x' character) ""
 -- Result >< 'x'
-option ::
-  a
-  -> Parser a
-  -> Parser a
-option =
-  error "todo: Course.MoreParser#option"
+option :: a -> Parser a -> Parser a
+option = flip (|||) . pure
 
 -- | Write a parser that parses 1 or more digits.
 --
@@ -148,10 +143,8 @@ option =
 --
 -- >>> isErrorResult (parse digits1 "abc123")
 -- True
-digits1 ::
-  Parser Chars
-digits1 =
-  error "todo: Course.MoreParser#digits1"
+digits1 :: Parser Chars
+digits1 = list1 digit
 
 -- | Write a function that parses one of the characters in the given string.
 --
