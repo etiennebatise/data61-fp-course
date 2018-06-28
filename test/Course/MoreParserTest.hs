@@ -26,7 +26,7 @@ import           Course.Person      (Person (..))
 
 import           Course.MoreParser  (between, betweenCharTok, charTok, commaTok,
                                      digits1, noneof, oneof, option, quote,
-                                     spaces, string, stringTok, tok, (<.>))
+                                     spaces, string, stringTok, tok, (<.>), hex)
 
 test_MoreParser :: TestTree
 test_MoreParser =
@@ -44,6 +44,7 @@ test_MoreParser =
   , noneofTest
   , betweenTest
   , betweenCharTokTest
+  , hexTest
   ]
 
 spacesTest :: TestTree
@@ -175,4 +176,18 @@ betweenCharTokTest =
    parse (betweenCharTok '[' ']' character) "a]" @?= UnexpectedChar 'a'
    , testCase "fail if the right delimiter is not found" $
    parse (betweenCharTok '[' ']' character) "[a" @?= UnexpectedEof
+  ]
+
+hexTest :: TestTree
+hexTest =
+  testGroup "hex"
+  [
+    testCase "parse de character 4 hex digits and return de value 1" $
+    parse hex "0010" @?= Result "" '\DLE'
+  , testCase "parse de character 4 hex digits and return de value 2" $
+    parse hex "0a1f" @?= Result "" '\2591'
+  , testCase "fail if not a hex number 1" $
+    parse hex "001" @?= UnexpectedEof
+  , testCase "fail if not a hex number 2" $
+    parse hex "0axf" @?= UnexpectedChar 'x'
   ]

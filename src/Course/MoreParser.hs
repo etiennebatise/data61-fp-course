@@ -221,10 +221,16 @@ betweenCharTok o c = between (charTok o) (charTok c)
 --
 -- >>> isErrorResult (parse hex "0axf")
 -- True
-hex ::
-  Parser Char
-hex =
-  error "todo: Course.MoreParser#hex"
+--
+-- lib :
+-- readHex :: (Eq a, Num a) => Chars -> Optional a
+hex :: Parser Char
+hex = let x = replicateA 4 (satisfy isHexDigit)
+          y l = case readHex $ reverse l of
+                  Full i -> pure $ chr i
+                  Empty -> pure $ chr 0
+      in y =<< x
+
 
 -- | Write a function that parses the character 'u' followed by 4 hex digits and return the character value.
 --
