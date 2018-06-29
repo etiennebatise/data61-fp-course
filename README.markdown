@@ -247,7 +247,7 @@ After this, the following progression of modules is recommended:
 * [x] `Course.Traversable`
 * [x] `Course.ListZipper`
 * [x] `Course.Parser` *(see also `Course.Person` for the parsing rules)*
-* [ ] `Course.MoreParser`
+* [x] `Course.MoreParser`
 * [ ] `Course.JsonParser`
 * [ ] `Course.Interactive`
 * [ ] `Course.Anagrams`

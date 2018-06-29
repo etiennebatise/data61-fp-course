@@ -24,10 +24,11 @@ import           Course.Parser      (ParseResult (..), Parser (..), ageParser,
                                      valueParser, (|||))
 import           Course.Person      (Person (..))
 
-import           Course.MoreParser  (between, betweenCharTok, charTok, commaTok,
-                                     digits1, hex, hexu, noneof, oneof, option,
-                                     quote, spaces, string, stringTok, tok,
-                                     (<.>))
+import           Course.MoreParser  (between, betweenCharTok, betweenSepbyComma,
+                                     charTok, commaTok, digits1, eof, hex, hexu,
+                                     noneof, oneof, option, quote, satisfyAll,
+                                     satisfyAny, sepby, sepby1, spaces, string,
+                                     stringTok, tok, (<.>))
 
 test_MoreParser :: TestTree
 test_MoreParser =
@@ -47,6 +48,12 @@ test_MoreParser =
   , betweenCharTokTest
   , hexTest
   , hexuTest
+  , sepby1Test
+  , sepbyTest
+  , eofTest
+  , satisfyAllTest
+  , satisfyAnyTest
+  , betweenSepbyCommaTest
   ]
 
 spacesTest :: TestTree
@@ -200,11 +207,92 @@ hexuTest =
   [ testCase "parse the character 'u' followed by 4 hex digits 1" $
     parse hexu "u0010" @?= Result "" '\DLE'
   , testCase "parse the character 'u' followed by 4 hex digits 2" $
-    parse hexu "u0a1f" @?= Result " " '\2591'
+    parse hexu "u0a1f" @?= Result "" '\2591'
   , testCase "fail if not starting with 'u'" $
     parse hexu "0010" @?= UnexpectedChar '0'
   , testCase "fail if not a hex number 1" $
     parse hexu "u001" @?= UnexpectedEof
   , testCase "fail if not a hex number 2" $
     parse hexu "u0axf" @?= UnexpectedChar 'x'
+  ]
+
+sepby1Test :: TestTree
+sepby1Test =
+  testGroup "sepby1"
+  [ testCase "produce value from p1 separated by p2 1" $
+    parse (sepby1 character (is ',')) "a" @?= Result "" "a"
+  , testCase "produce value from p1 separated by p2 2" $
+    parse (sepby1 character (is ',')) "a,b,c" @?= Result "" "abc"
+  , testCase "produce value from p1 separated by p2 3" $
+    parse (sepby1 character (is ',')) "a,b,c,,def" @?= Result "def" "abc,"
+  , testCase "fail when input is empty" $
+    parse (sepby1 character (is ',')) "" @?= UnexpectedEof
+  ]
+
+sepbyTest :: TestTree
+sepbyTest =
+  testGroup "sepby"
+  [ testCase "produce value from p1 separated by p2 1" $
+    parse (sepby character (is ',')) "a" @?= Result "" "a"
+  , testCase "produce value from p1 separated by p2 2" $
+    parse (sepby character (is ',')) "a,b,c" @?= Result "" "abc"
+  , testCase "produce value from p1 separated by p2 3" $
+    parse (sepby character (is ',')) "a,b,c,,def" @?= Result "def" "abc,"
+  , testCase "produce a list if input is empty" $
+    parse (sepby character (is ',')) "" @?= Result "" ""
+  ]
+
+eofTest :: TestTree
+eofTest =
+  testGroup "eof"
+  [ testCase "assert that there is no remaining input" $
+    parse eof "" @?= Result "" ()
+  , testCase "fail if input is not empty" $
+    parse eof "abc" @?= UnexpectedChar 'a'
+  ]
+
+satisfyAllTest :: TestTree
+satisfyAllTest =
+  testGroup "satisfyAll"
+  [ testCase "produce a character that satisfies all the predicates" $
+    parse (satisfyAll (isUpper :. (/= 'X') :. Nil)) "ABC" @?= Result "BC" 'A'
+  , testCase "fail when one of the predicates fails 1" $
+    parse (satisfyAll (isUpper :. (/= 'X') :. Nil)) "XBc" @?= UnexpectedChar 'X'
+  , testCase "fail when one of the predicates fails 1" $
+    parse (satisfyAll (isUpper :. (/= 'X') :. Nil)) "abc" @?= UnexpectedChar 'a'
+  , testCase "fail when one of the predicates fails 2" $
+    parse (satisfyAll (isUpper :. (/= 'X') :. Nil)) "" @?= UnexpectedEof
+
+  ]
+
+satisfyAnyTest :: TestTree
+satisfyAnyTest =
+  testGroup "satisfyAny"
+  [ testCase "produce a character that satisfies one of the predicates" $
+    parse (satisfyAny (isLower :. (/= 'X') :. Nil)) "abc" @?= Result "bc"  'a'
+  , testCase "produce a character that satisfies one of the predicates" $
+    parse (satisfyAny (isLower :. (/= 'X') :. Nil)) "ABc" @?= Result "Bc" 'A'
+  , testCase "fail when every the predicates fails 1" $
+    parse (satisfyAny (isLower :. (/= 'X') :. Nil)) "XBc" @?= UnexpectedChar 'X'
+  , testCase "fail when every the predicates fails 2" $
+    parse (satisfyAny (isLower :. (/= 'X') :. Nil)) "" @?= UnexpectedEof
+  ]
+
+betweenSepbyCommaTest :: TestTree
+betweenSepbyCommaTest =
+  testGroup "betweenSepbyComma"
+  [ testCase "run the parser inside the given chars, on all comma separted characters 1" $
+    parse (betweenSepbyComma '[' ']' lower) "[a]" @?= Result "" "a"
+  , testCase "run the parser inside the given chars, on all comma separted characters 2" $
+    parse (betweenSepbyComma '[' ']' lower) "[a,b,c]" @?= Result "" "abc"
+  , testCase "run the parser inside the given chars, on all comma separted characters" $
+    parse (betweenSepbyComma '[' ']' lower) "[]" @?= Result "" ""
+  , testCase "fail when the parser fails" $
+    parse (betweenSepbyComma '[' ']' lower) "[A]" @?= UnexpectedChar 'A'
+  , testCase "fail when left delimiter is not found" $
+    parse (betweenSepbyComma '[' ']' lower) "a]" @?= UnexpectedChar 'a'
+  , testCase "fail when right delimiter is not found 1" $
+    parse (betweenSepbyComma '[' ']' lower) "[a" @?= UnexpectedEof
+  , testCase "fail when separator is not found" $
+    parse (betweenSepbyComma '[' ']' lower) "[abc]" @?= UnexpectedChar 'b'
   ]
