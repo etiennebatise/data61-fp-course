@@ -25,8 +25,9 @@ import           Course.Parser      (ParseResult (..), Parser (..), ageParser,
 import           Course.Person      (Person (..))
 
 import           Course.MoreParser  (between, betweenCharTok, charTok, commaTok,
-                                     digits1, noneof, oneof, option, quote,
-                                     spaces, string, stringTok, tok, (<.>), hex)
+                                     digits1, hex, hexu, noneof, oneof, option,
+                                     quote, spaces, string, stringTok, tok,
+                                     (<.>))
 
 test_MoreParser :: TestTree
 test_MoreParser =
@@ -45,6 +46,7 @@ test_MoreParser =
   , betweenTest
   , betweenCharTokTest
   , hexTest
+  , hexuTest
   ]
 
 spacesTest :: TestTree
@@ -190,4 +192,19 @@ hexTest =
     parse hex "001" @?= UnexpectedEof
   , testCase "fail if not a hex number 2" $
     parse hex "0axf" @?= UnexpectedChar 'x'
+  ]
+
+hexuTest :: TestTree
+hexuTest =
+  testGroup "hexu"
+  [ testCase "parse the character 'u' followed by 4 hex digits 1" $
+    parse hexu "u0010" @?= Result "" '\DLE'
+  , testCase "parse the character 'u' followed by 4 hex digits 2" $
+    parse hexu "u0a1f" @?= Result " " '\2591'
+  , testCase "fail if not starting with 'u'" $
+    parse hexu "0010" @?= UnexpectedChar '0'
+  , testCase "fail if not a hex number 1" $
+    parse hexu "u001" @?= UnexpectedEof
+  , testCase "fail if not a hex number 2" $
+    parse hexu "u0axf" @?= UnexpectedChar 'x'
   ]

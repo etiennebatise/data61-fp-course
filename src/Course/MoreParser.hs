@@ -250,10 +250,8 @@ hex = let x = replicateA 4 (satisfy isHexDigit)
 --
 -- >>> isErrorResult (parse hexu "u0axf")
 -- True
-hexu ::
-  Parser Char
-hexu =
-  error "todo: Course.MoreParser#hexu"
+hexu :: Parser Char
+hexu = const hex =<< is 'u'
 
 -- | Write a function that produces a non-empty list of values coming off the given parser (which must succeed at least once),
 -- separated by the second given parser.
