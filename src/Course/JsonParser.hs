@@ -41,32 +41,19 @@ data SpecialCharacter =
   deriving (Eq, Ord, Show)
 
 -- NOTE: This is not inverse to @toSpecialCharacter@.
-fromSpecialCharacter ::
-  SpecialCharacter
-  -> Char
-fromSpecialCharacter BackSpace =
-  chr 0x08
-fromSpecialCharacter FormFeed =
-  chr 0x0C
-fromSpecialCharacter NewLine =
-  '\n'
-fromSpecialCharacter CarriageReturn =
-  '\r'
-fromSpecialCharacter Tab =
-  '\t'
-fromSpecialCharacter VerticalTab =
-  '\v'
-fromSpecialCharacter SingleQuote =
-  '\''
-fromSpecialCharacter DoubleQuote =
-  '"'
-fromSpecialCharacter Backslash =
-  '\\'
+fromSpecialCharacter :: SpecialCharacter -> Char
+fromSpecialCharacter BackSpace = chr 0x08
+fromSpecialCharacter FormFeed = chr 0x0C
+fromSpecialCharacter NewLine = '\n'
+fromSpecialCharacter CarriageReturn = '\r'
+fromSpecialCharacter Tab = '\t'
+fromSpecialCharacter VerticalTab = '\v'
+fromSpecialCharacter SingleQuote = '\''
+fromSpecialCharacter DoubleQuote = '"'
+fromSpecialCharacter Backslash = '\\'
 
 -- NOTE: This is not inverse to @fromSpecialCharacter@.
-toSpecialCharacter ::
-  Char
-  -> Optional SpecialCharacter
+toSpecialCharacter :: Char -> Optional SpecialCharacter
 toSpecialCharacter c =
   let table = ('b', BackSpace) :.
               ('f', FormFeed) :.
@@ -78,8 +65,8 @@ toSpecialCharacter c =
               ('"' , DoubleQuote) :.
               ('\\', Backslash) :.
               Nil
-  in snd <$> find ((==) c . fst) table
-  
+  in snd <$> find ((c ==) . fst) table
+
 -- | Parse a JSON string. Handle double-quotes, special characters, hexadecimal characters. See http://json.org for the full list of control characters in JSON.
 --
 -- /Tip:/ Use `hex`, `fromSpecialCharacter`, `between`, `is`, `charTok`, `toSpecialCharacter`.
@@ -107,10 +94,34 @@ toSpecialCharacter c =
 --
 -- >>> isErrorResult (parse jsonString "\"\\abc\"def")
 -- True
-jsonString ::
-  Parser Chars
-jsonString =
-  error "todo: Course.JsonParser#jsonString"
+jsonString :: Parser Chars
+-- jsonString = error "todo: Course.JsonParser#jsonString"
+jsonString = between
+             (is $ fromSpecialCharacter DoubleQuote)
+             (is $ fromSpecialCharacter DoubleQuote)
+             f
+  where
+    f :: Parser Chars
+    f = list $
+        space
+        ||| specialCharacter
+        ||| lower
+    specialCharacter = do _ <- is (fromSpecialCharacter Backslash)
+                          c <- character
+                          case toSpecialCharacter c of
+                            Full j -> pure $ fromSpecialCharacter j
+                            Empty  -> constantParser $ UnexpectedChar c
+    l = BackSpace
+        :. FormFeed
+        :. NewLine
+        :. CarriageReturn
+        :. Tab
+        :. VerticalTab
+        :. SingleQuote
+        :. DoubleQuote
+        :. Backslash
+        :. Nil
+    -- x = oneof $ fromSpecialCharacter <$> l
 
 -- | Parse a JSON rational.
 --
