@@ -306,7 +306,7 @@ sepby a s = sepby1 a s ||| pure Nil
 eof :: Parser ()
 eof = P $ \case
              (a:._) -> UnexpectedChar a
-             Nil -> Result "" ()
+             Nil -> Result Nil ()
 
 -- | Write a parser that produces a character that satisfies all of the given predicates.
 --
