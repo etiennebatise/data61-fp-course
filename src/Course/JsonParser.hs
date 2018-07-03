@@ -148,10 +148,8 @@ jsonNumber = list character >>= (\i -> case readFloats i of
 --
 -- >>> isErrorResult (parse jsonTrue "TRUE")
 -- True
-jsonTrue ::
-  Parser Chars
-jsonTrue =
-  error "todo: Course.JsonParser#jsonTrue"
+jsonTrue :: Parser Chars
+jsonTrue = stringTok "true"
 
 -- | Parse a JSON false literal.
 --
@@ -162,10 +160,8 @@ jsonTrue =
 --
 -- >>> isErrorResult (parse jsonFalse "FALSE")
 -- True
-jsonFalse ::
-  Parser Chars
-jsonFalse =
-  error "todo: Course.JsonParser#jsonFalse"
+jsonFalse :: Parser Chars
+jsonFalse = stringTok "false"
 
 -- | Parse a JSON null literal.
 --
@@ -176,10 +172,8 @@ jsonFalse =
 --
 -- >>> isErrorResult (parse jsonNull "NULL")
 -- True
-jsonNull ::
-  Parser Chars
-jsonNull =
-  error "todo: Course.JsonParser#jsonNull"
+jsonNull :: Parser Chars
+jsonNull = stringTok "null"
 
 -- | Parse a JSON array.
 --
@@ -199,10 +193,8 @@ jsonNull =
 --
 -- >>> parse jsonArray "[true, \"abc\", [false]]"
 -- Result >< [JsonTrue,JsonString "abc",JsonArray [JsonFalse]]
-jsonArray ::
-  Parser (List JsonValue)
-jsonArray =
-  error "todo: Course.JsonParser#jsonArray"
+jsonArray :: Parser (List JsonValue)
+jsonArray = betweenSepbyComma '[' ']' jsonValue
 
 -- | Parse a JSON object.
 --
@@ -219,10 +211,8 @@ jsonArray =
 --
 -- >>> parse jsonObject "{ \"key1\" : true , \"key2\" : false } xyz"
 -- Result >xyz< [("key1",JsonTrue),("key2",JsonFalse)]
-jsonObject ::
-  Parser Assoc
-jsonObject =
-  error "todo: Course.JsonParser#jsonObject"
+jsonObject :: Parser Assoc
+jsonObject = error "todo: Course.JsonParser#jsonObject"
 
 -- | Parse a JSON value.
 --
