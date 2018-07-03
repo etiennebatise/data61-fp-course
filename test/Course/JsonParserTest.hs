@@ -34,10 +34,8 @@ jsonStringTest =
       parse jsonString "\" abc\"" @?= Result "" " abc"
   , testCase "parse only the first string of input" $
       parse jsonString "\"abc\"def" @?= Result "def" "abc"
-
   , testCase "parse back slash (\\)" $
       parse jsonString "\"\\babc\"def" @?= Result "def" "\babc"
-
   , testCase "parse unicode (\\u00abc)" $
       parse jsonString "\"\\u00abc\"def" @?= Result "def" "«c"
   , testCase "parse unicode (\\u00ff)" $

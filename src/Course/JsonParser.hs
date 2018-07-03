@@ -95,33 +95,19 @@ toSpecialCharacter c =
 -- >>> isErrorResult (parse jsonString "\"\\abc\"def")
 -- True
 jsonString :: Parser Chars
--- jsonString = error "todo: Course.JsonParser#jsonString"
 jsonString = between
              (is $ fromSpecialCharacter DoubleQuote)
              (is $ fromSpecialCharacter DoubleQuote)
-             f
+             $ list $ space ||| escape ||| lower
   where
-    f :: Parser Chars
-    f = list $
-        space
-        ||| specialCharacter
-        ||| lower
-    specialCharacter = do _ <- is (fromSpecialCharacter Backslash)
-                          c <- character
-                          case toSpecialCharacter c of
-                            Full j -> pure $ fromSpecialCharacter j
-                            Empty  -> constantParser $ UnexpectedChar c
-    l = BackSpace
-        :. FormFeed
-        :. NewLine
-        :. CarriageReturn
-        :. Tab
-        :. VerticalTab
-        :. SingleQuote
-        :. DoubleQuote
-        :. Backslash
-        :. Nil
-    -- x = oneof $ fromSpecialCharacter <$> l
+    escape :: Parser Char
+    escape = do _ <- is (fromSpecialCharacter Backslash)
+                c <- character
+                if c == 'u' then hex else specialCharacter c
+    specialCharacter :: Char -> Parser Char
+    specialCharacter c = case toSpecialCharacter c of
+                         Full j -> pure $ fromSpecialCharacter j
+                         Empty  -> constantParser $ UnexpectedChar c
 
 -- | Parse a JSON rational.
 --
