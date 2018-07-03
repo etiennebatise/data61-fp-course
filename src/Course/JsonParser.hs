@@ -2,6 +2,7 @@
 {-# LANGUAGE ScopedTypeVariables #-}
 {-# LANGUAGE OverloadedStrings #-}
 {-# LANGUAGE RebindableSyntax #-}
+{-# LANGUAGE LambdaCase #-}
 
 module Course.JsonParser where
 
@@ -133,10 +134,10 @@ jsonString = between
 --
 -- >>> isErrorResult (parse jsonNumber "abc")
 -- True
-jsonNumber ::
-  Parser Rational
-jsonNumber =
-  error "todo: Course.JsonParser#jsonNumber"
+jsonNumber :: Parser Rational
+jsonNumber = list character >>= (\i -> case readFloats i of
+                                      Full (x,_) -> pure x
+                                      Empty -> constantParser $ UnexpectedString i)
 
 -- | Parse a JSON true literal.
 --
