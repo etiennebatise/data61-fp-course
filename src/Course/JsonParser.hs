@@ -99,7 +99,7 @@ jsonString :: Parser Chars
 jsonString = between
              (is $ fromSpecialCharacter DoubleQuote)
              (is $ fromSpecialCharacter DoubleQuote)
-             $ list $ space ||| escape ||| lower
+             $ list $ space ||| escape ||| lower ||| upper ||| digit
   where
     escape :: Parser Char
     escape = do _ <- is (fromSpecialCharacter Backslash)
@@ -212,7 +212,20 @@ jsonArray = betweenSepbyComma '[' ']' jsonValue
 -- >>> parse jsonObject "{ \"key1\" : true , \"key2\" : false } xyz"
 -- Result >xyz< [("key1",JsonTrue),("key2",JsonFalse)]
 jsonObject :: Parser Assoc
-jsonObject = error "todo: Course.JsonParser#jsonObject"
+-- jsonObject = betweenSepbyComma '{' '}' $ do a <- jsonString
+--                                             _ <- string " : "
+--                                             b <- jsonValue
+--                                             pure (a, b)
+jsonObject = do _ <- charTok '{'
+                a <- jsonString
+                _ <- string " : "
+                b <- jsonValue
+                -- _ <- spaces
+                c <- charTok ','
+                d <- jsonString
+                _ <- string " : "
+                e <- jsonValue
+                pure $ (d, JsonFalse) :. Nil
 
 -- | Parse a JSON value.
 --
@@ -226,10 +239,16 @@ jsonObject = error "todo: Course.JsonParser#jsonObject"
 --
 -- >>> parse jsonObject "{ \"key1\" : true , \"key2\" : [7, false] , \"key3\" : { \"key4\" : null } }"
 -- Result >< [("key1",JsonTrue),("key2",JsonArray [JsonRational (7 % 1),JsonFalse]),("key3",JsonObject [("key4",JsonNull)])]
-jsonValue ::
-  Parser JsonValue
-jsonValue =
-   error "todo: Course.JsonParser#jsonValue"
+jsonValue :: Parser JsonValue
+-- jsonValue = error "todo: Course.JsonParser#jsonValue"
+-- jsonValue = (jsonTrue >>= (\_ -> pure JsonTrue))
+jsonValue = (JsonString <$> jsonString)
+            ||| (const JsonTrue <$> jsonTrue)
+            ||| (const JsonFalse <$> jsonFalse )
+            ||| (const JsonNull <$> jsonNull )
+            -- ||| (JsonArray <$> jsonArray)
+            -- ||| (JsonRational <$> jsonNumber)
+            -- ||| (JsonObject <$> jsonObject)
 
 -- | Read a file into a JSON value.
 --
