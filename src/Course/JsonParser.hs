@@ -135,9 +135,10 @@ jsonString = between
 -- >>> isErrorResult (parse jsonNumber "abc")
 -- True
 jsonNumber :: Parser Rational
-jsonNumber = list character >>= (\i -> case readFloats i of
-                                      Full (x,_) -> pure x
-                                      Empty -> constantParser $ UnexpectedString i)
+jsonNumber = list (is '-' ||| is '.' ||| digit)
+             >>= (\i -> case readFloats i of
+                       Full (x,_) -> pure x
+                       Empty -> constantParser $ UnexpectedString i)
 
 -- | Parse a JSON true literal.
 --
@@ -194,7 +195,10 @@ jsonNull = stringTok "null"
 -- >>> parse jsonArray "[true, \"abc\", [false]]"
 -- Result >< [JsonTrue,JsonString "abc",JsonArray [JsonFalse]]
 jsonArray :: Parser (List JsonValue)
-jsonArray = betweenSepbyComma '[' ']' jsonValue
+jsonArray = betweenSepbyComma '[' ']' $ do _ <- spaces
+                                           a <- jsonValue
+                                           _ <- spaces
+                                           pure a
 
 -- | Parse a JSON object.
 --
@@ -212,20 +216,11 @@ jsonArray = betweenSepbyComma '[' ']' jsonValue
 -- >>> parse jsonObject "{ \"key1\" : true , \"key2\" : false } xyz"
 -- Result >xyz< [("key1",JsonTrue),("key2",JsonFalse)]
 jsonObject :: Parser Assoc
--- jsonObject = betweenSepbyComma '{' '}' $ do a <- jsonString
---                                             _ <- string " : "
---                                             b <- jsonValue
---                                             pure (a, b)
-jsonObject = do _ <- charTok '{'
-                a <- jsonString
-                _ <- string " : "
-                b <- jsonValue
-                -- _ <- spaces
-                c <- charTok ','
-                d <- jsonString
-                _ <- string " : "
-                e <- jsonValue
-                pure $ (d, JsonFalse) :. Nil
+jsonObject = betweenSepbyComma '{' '}' $ do _ <- spaces
+                                            a <- tok jsonString
+                                            _ <- charTok ':'
+                                            b <- tok jsonValue
+                                            pure (a, b)
 
 -- | Parse a JSON value.
 --
@@ -240,21 +235,17 @@ jsonObject = do _ <- charTok '{'
 -- >>> parse jsonObject "{ \"key1\" : true , \"key2\" : [7, false] , \"key3\" : { \"key4\" : null } }"
 -- Result >< [("key1",JsonTrue),("key2",JsonArray [JsonRational (7 % 1),JsonFalse]),("key3",JsonObject [("key4",JsonNull)])]
 jsonValue :: Parser JsonValue
--- jsonValue = error "todo: Course.JsonParser#jsonValue"
--- jsonValue = (jsonTrue >>= (\_ -> pure JsonTrue))
 jsonValue = (JsonString <$> jsonString)
+            ||| (JsonArray <$> jsonArray)
             ||| (const JsonTrue <$> jsonTrue)
-            ||| (const JsonFalse <$> jsonFalse )
-            ||| (const JsonNull <$> jsonNull )
-            -- ||| (JsonArray <$> jsonArray)
-            -- ||| (JsonRational <$> jsonNumber)
-            -- ||| (JsonObject <$> jsonObject)
+            ||| (const JsonFalse <$> jsonFalse)
+            ||| (const JsonNull <$> jsonNull)
+            ||| (JsonRational <$> jsonNumber)
+            ||| (JsonObject <$> jsonObject)
 
 -- | Read a file into a JSON value.
 --
 -- /Tip:/ Use @System.IO#readFile@ and `jsonValue`.
-readJsonValue ::
-  FilePath
-  -> IO (ParseResult JsonValue)
-readJsonValue =
-  error "todo: Course.JsonParser#readJsonValue"
+readJsonValue :: FilePath -> IO (ParseResult JsonValue)
+readJsonValue f = do c <- readFile f
+                     pure $ parse jsonValue c

@@ -106,9 +106,9 @@ jsonObjectTest =
       parse jsonObject "{ \"key1\" : true }" @?= Result "" (("key1",JsonTrue) :. Nil)
   , testCase "two keys" $
       parse jsonObject "{ \"key1\" : true , \"key2\" : false }" @?= Result "" (("key1",JsonTrue):.("key2",JsonFalse):.Nil)
-  -- , testCase "two keys and left over input" $
-  --     let result = Result "xyz" (("key1",JsonTrue):.("key2",JsonFalse):.Nil)
-  --      in parse jsonObject "{ \"key1\" : true , \"key2\" : false } xyz" @?= result
+  , testCase "two keys and left over input" $
+      let result = Result "xyz" (("key1",JsonTrue):.("key2",JsonFalse):.Nil)
+       in parse jsonObject "{ \"key1\" : true , \"key2\" : false } xyz" @?= result
   ]
 
 jsonValueTest :: TestTree
@@ -120,8 +120,23 @@ jsonValueTest =
       parse jsonValue "false" @?= Result "" JsonFalse
   , testCase "null" $
       parse jsonValue "null" @?= Result "" JsonNull
+  , testCase "rational" $
+      parse jsonValue "1" @?= Result "" (JsonRational (1 % 1))
   , testCase "[true,false,null]" $
       parse jsonValue "[true,false,null]" @?= Result "" (JsonArray (JsonTrue :. JsonFalse :. JsonNull :. Nil))
+  , testCase "string" $
+      parse jsonValue "\"abc\"" @?= Result "" (JsonString "abc")
+  , testCase "object" $
+      parse jsonObject "{ \"key2\" : true }" @?= Result "" (("key2",JsonTrue):.Nil)
+  , testCase "object" $
+      parse jsonObject "{ \"key2\" : [ true , false ] }" @?= Result "" (("key2",JsonArray (JsonTrue :. JsonFalse :. Nil)):.Nil)
+  , testCase "object" $
+      parse jsonObject "{ \"key2\" : [ true , 7 ] }" @?= Result "" (("key2",JsonArray (JsonTrue :. (JsonRational (7 % 1)) :. Nil)):.Nil)
+  , testCase "object" $
+      let result = Result "" (("key2",JsonArray (JsonRational (7 % 1) :. JsonFalse:.Nil))
+                             :. Nil
+                             )
+       in parse jsonObject "{\"key2\":[7,false]}" @?= result
   , testCase "object" $
       let result = Result "" (  ("key1",JsonTrue)
                              :. ("key2",JsonArray (JsonRational (7 % 1) :. JsonFalse:.Nil))
