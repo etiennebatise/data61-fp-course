@@ -285,7 +285,7 @@ betweenSepbyCommaTest =
     parse (betweenSepbyComma '[' ']' lower) "[a]" @?= Result "" "a"
   , testCase "run the parser inside the given chars, on all comma separted characters 2" $
     parse (betweenSepbyComma '[' ']' lower) "[a,b,c]" @?= Result "" "abc"
-  , testCase "run the parser inside the given chars, on all comma separted characters" $
+  , testCase "run the parser inside the given chars, on all comma separted characters 3" $
     parse (betweenSepbyComma '[' ']' lower) "[]" @?= Result "" ""
   , testCase "fail when the parser fails" $
     parse (betweenSepbyComma '[' ']' lower) "[A]" @?= UnexpectedChar 'A'
