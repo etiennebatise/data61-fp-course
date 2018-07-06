@@ -249,7 +249,7 @@ After this, the following progression of modules is recommended:
 * [x] `Course.Parser` *(see also `Course.Person` for the parsing rules)*
 * [x] `Course.MoreParser`
 * [x] `Course.JsonParser`
-* [ ] `Course.Interactive`
+* [x] `Course.Interactive`
 * [ ] `Course.Anagrams`
 * [ ] `Course.FastAnagrams`
 * [ ] `Course.Cheque`
