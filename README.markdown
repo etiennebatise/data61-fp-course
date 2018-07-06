@@ -251,7 +251,7 @@ After this, the following progression of modules is recommended:
 * [x] `Course.JsonParser`
 * [x] `Course.Interactive`
 * [x] `Course.Anagrams`
-* [ ] `Course.FastAnagrams`
+* [x] `Course.FastAnagrams`
 * [ ] `Course.Cheque`
 
 During this progression, it is often the case that some exercises are abandoned
