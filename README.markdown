@@ -250,7 +250,7 @@ After this, the following progression of modules is recommended:
 * [x] `Course.MoreParser`
 * [x] `Course.JsonParser`
 * [x] `Course.Interactive`
-* [ ] `Course.Anagrams`
+* [x] `Course.Anagrams`
 * [ ] `Course.FastAnagrams`
 * [ ] `Course.Cheque`
 
